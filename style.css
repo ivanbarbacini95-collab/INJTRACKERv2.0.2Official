@@ -1,4 +1,4 @@
-/* style.css — Injective Portfolio v2.0.2 (FULL FILE) */
+/* style.css â€” Injective Portfolio v2.0.2 (FULL FILE) */
 
 :root{
   --bg-dark:#000;
@@ -401,7 +401,7 @@ body[data-theme="light"] .card-expand{ border-color: rgba(15,23,42,.10); backgro
   overflow: hidden;
 }
 
-/* ===== Bars (più grandi, % al centro) ===== */
+/* ===== Bars (piÃ¹ grandi, % al centro) ===== */
 .bar-container{
   margin-top: 12px;
   height: 18px;
@@ -917,8 +917,8 @@ body[data-theme="light"] .acc-head{
 
 
 /* =========================================================
-   v2.0.2 • Integrations (privacy + events pro + targets + APR + validator + price TF)
-   (appended – no reordering)
+   v2.0.2 â€¢ Integrations (privacy + events pro + targets + APR + validator + price TF)
+   (appended â€“ no reordering)
    ========================================================= */
 
 /* --- Privacy mode (targeted: blur only per-address fields) --- */
@@ -1140,7 +1140,7 @@ body[data-theme="light"] .ev-badge{ border-color: rgba(15,23,42,.12); background
 
 
 /* =========================================================
-   v2.0.2 • Final patches (click-only readouts + spacing + bar labels + price scale)
+   v2.0.2 â€¢ Final patches (click-only readouts + spacing + bar labels + price scale)
    ========================================================= */
 
 /* Chart readouts: show only during interaction */
@@ -1322,7 +1322,7 @@ body[data-theme="light"] .mini-btn.primary{
 /* ===== View mode: PRO / LITE ===== */
 body[data-view="pro"]{}
 
-/* LITE = solo numeri, layout più compatto */
+/* LITE = solo numeri, layout piÃ¹ compatto */
 body[data-view="lite"] .cards-wrapper{ gap: .78rem; }
 body[data-view="lite"] .card{ padding: 12px; }
 body[data-view="lite"] .value-row{ font-size: 1.55rem; }
@@ -1693,4 +1693,3 @@ body[data-theme="light"] .bar-pct{ color: rgba(15,23,42,.92); text-shadow:none; 
   text-align:right;
 }
 #backupSettingsCard #backupNowBtn{ white-space:nowrap; }
-
