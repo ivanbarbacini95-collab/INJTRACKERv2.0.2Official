@@ -1,6 +1,6 @@
 /* =========================================================
-   Injective Portfolio â€¢ v2.0.2
-   app.js â€” FULL FILE (Definitivo + Advanced settings + crosshair + per-address isolation)
+   Injective Portfolio | v2.0.2
+   app.js -- FULL FILE (Definitivo + Advanced settings + crosshair + per-address isolation)
    ========================================================= */
 
 /* ================= CONFIG ================= */
@@ -43,7 +43,7 @@ const DAY_MINUTES = 24 * 60;
 const ONE_MIN_MS = 60_000;
 
 /* Price Chart live window */
-const PRICE_LIVE_WINDOW_MS = 15 * 60 * 1000; // âœ… 15 minutes
+const PRICE_LIVE_WINDOW_MS = 15 * 60 * 1000; //  15 minutes
 const PRICE_LIVE_MAX_POINTS = 15;
 
 /* Tx fee estimate (Injective min gas price 160,000,000inj; 1 INJ = 1e18 inj) */
@@ -64,12 +64,19 @@ const EV_LOCAL_VER = 1;
 const NW_MAX_POINTS = 4800;
 
 /* Net Worth live window */
-const NW_LIVE_WINDOW_MS = 15 * 60 * 1000; // âœ… 15 minutes live window
+const NW_LIVE_WINDOW_MS = 15 * 60 * 1000; //  15 minutes live window
 
 /* cloud */
 const CLOUD_API = "/api/point";
 const CLOUD_PUSH_DEBOUNCE_MS = 1200;
 const CLOUD_PULL_INTERVAL_MS = 45_000;
+const BACKUP_API = "/api/backup";
+const BACKUP_VER = 1;
+const BACKUP_LOCAL_PREFIX = `inj_backup_v${BACKUP_VER}_`;
+const BACKUP_META_PREFIX  = `inj_backupmeta_v${BACKUP_VER}_`;
+const BACKUP_PUSH_DEBOUNCE_MS = 2200;
+const BACKUP_FAIL_COOLDOWN_MS = 120_000;
+let backupLastFailAt = 0;
 const CLOUD_FAIL_COOLDOWN_MS = 120_000;
 let cloudLastFailAt = 0;
 
@@ -99,7 +106,7 @@ function labelToTs(lbl) {
 }
 
 function nowLabel() { return new Date().toLocaleTimeString(); }
-function shortAddr(a) { return a && a.length > 18 ? (a.slice(0, 10) + "â€¦" + a.slice(-6)) : (a || ""); }
+function shortAddr(a) { return a && a.length > 18 ? (a.slice(0, 10) + "..." + a.slice(-6)) : (a || ""); }
 function setText(id, txt) { const el = $(id); if (el) el.textContent = txt; }
 
 function fmtSmart(v){
@@ -259,7 +266,7 @@ function applyTheme(t){
   document.body.dataset.theme = theme;
   localStorage.setItem(THEME_KEY, theme);
   const themeIcon = $("themeIcon");
-  if (themeIcon) themeIcon.textContent = theme === "dark" ? "ðŸŒ™" : "â˜€ï¸";
+  if (themeIcon) themeIcon.innerHTML = theme === "dark" ? "&#127769;" : "&#9728;";
   refreshChartsTheme();
   renderSettingsSnapshot(); // keep settings updated
 }
@@ -271,7 +278,7 @@ function applyView(v){
 
   const icon = $("viewIcon");
   const btn  = $("viewToggle");
-  if (icon) icon.textContent = (viewMode === "lite") ? "âš¡" : "ðŸ§ ";
+  if (icon) icon.textContent = (viewMode === "lite") ? "&#9889;" : "&#129504;";
   if (btn) btn.setAttribute("aria-label", `View mode: ${viewMode.toUpperCase()}`);
 }
 
@@ -334,7 +341,7 @@ function refreshConnUI() {
 
   if (!hasInternet()) {
     const last = fmtLastOk();
-    setState("offline", last ? `Offline â€¢ Last: ${last}` : "Offline");
+    setState("offline", last ? `Offline | Last: ${last}` : "Offline");
     return;
   }
 
@@ -422,9 +429,9 @@ function updatePerf(arrowId, pctId, v) {
   const arrow = $(arrowId), pct = $(pctId);
   if (!arrow || !pct) return;
 
-  if (v > 0) { arrow.textContent = "â–²"; arrow.className = "arrow up"; pct.className = "pct up"; }
-  else if (v < 0) { arrow.textContent = "â–¼"; arrow.className = "arrow down"; pct.className = "pct down"; }
-  else { arrow.textContent = "â–º"; arrow.className = "arrow flat"; pct.className = "pct flat"; }
+  if (v > 0) { arrow.innerHTML = "&#9650;"; arrow.className = "arrow up"; pct.className = "pct up"; }
+  else if (v < 0) { arrow.innerHTML = "&#9660;"; arrow.className = "arrow down"; pct.className = "pct down"; }
+  else { arrow.innerHTML = "&#9654;"; arrow.className = "arrow flat"; pct.className = "pct flat"; }
 
   pct.textContent = Math.abs(v).toFixed(2) + "%";
 }
@@ -493,7 +500,7 @@ function maskAddr(a){
   const s = String(a||"").trim();
   if (!s) return "";
   if (s.length <= 14) return s;
-  return s.slice(0, 8) + "â€¦" + s.slice(-6);
+  return s.slice(0, 8) + "..." + s.slice(-6);
 }
 function setCopyButtonState(ok){
   const btn = $("copyAddrBtn");
@@ -551,7 +558,7 @@ addressInput?.addEventListener("keydown", async (e) => {
     await commitAddress(v);
     addressInput.value = "";
     pendingAddress = "";
-    closeSearch(); /* âœ… torna normale dopo ricerca */
+    closeSearch(); /*  torna normale dopo ricerca */
   } else if (e.key === "Escape") {
     e.preventDefault();
     addressInput.value = "";
@@ -661,7 +668,7 @@ function pageLabel(key){
 }
 function openComingSoon(pageKey){
   if (!comingSoon) return;
-  if (comingTitle) comingTitle.textContent = `COMING SOON ðŸš€`;
+  if (comingTitle) comingTitle.textContent = `COMING SOON `;
   if (comingSub) comingSub.textContent = `${pageLabel(pageKey)} is coming soon.`;
   comingSoon.classList.add("show");
   comingSoon.setAttribute("aria-hidden", "false");
@@ -828,7 +835,7 @@ function renderCardOrderUI(){
     up.dataset.act = "up";
     up.dataset.id = id;
     up.setAttribute("aria-label", "Move up");
-    up.textContent = "â–²";
+    up.innerHTML = "&#9650;";
     up.disabled = (i === 0);
 
     const down = document.createElement("button");
@@ -837,7 +844,7 @@ function renderCardOrderUI(){
     down.dataset.act = "down";
     down.dataset.id = id;
     down.setAttribute("aria-label", "Move down");
-    down.textContent = "â–¼";
+    down.innerHTML = "&#9660;";
     down.disabled = (i === cardOrderDraft.length - 1);
 
     actions.appendChild(up);
@@ -877,7 +884,7 @@ function renderCardOrderUI(){
       const ids = normalizeCardOrder(cardOrderDraft);
       saveCardOrder(ids);
       applyCardOrder(ids);
-      if (note) note.textContent = "Applied âœ“";
+      if (note) note.textContent = "Applied ";
     }, { passive:false });
 
     $("cardOrderReset")?.addEventListener("click", (e) => {
@@ -887,7 +894,7 @@ function renderCardOrderUI(){
       saveCardOrder(ids);
       applyCardOrder(ids);
       renderCardOrderUI();
-      if (note) note.textContent = "Reset âœ“";
+      if (note) note.textContent = "Reset ";
     }, { passive:false });
   }
 }
@@ -1014,7 +1021,6 @@ function saveEvents(){
     localStorage.setItem(key, JSON.stringify({ v: EV_LOCAL_VER, t: Date.now(), events: eventsAll.slice(0, 1200) }));
   } catch {}
   cloudBumpLocal(1);
-    backupTouchLocal();
   cloudMarkDirty({ events:true });
 }
 function showToast(ev){
@@ -1133,7 +1139,9 @@ function startAllTimers(){
   accountPollTimer = setInterval(() => safeAsync(() => loadAccount(false), "loadAccount"), ACCOUNT_POLL_MS);
   restSyncTimer = setInterval(() => safeAsync(() => loadCandleSnapshot(false), "loadCandleSnapshot"), REST_SYNC_MS);
   chartSyncTimer = setInterval(() => {
-    if (!hasInternet()) return;
+    backupMarkDirty();
+
+  if (!hasInternet()) return;
     // In REFRESH: periodically update chart from Binance
     if (!liveMode) { safeAsync(() => loadPriceChart(true), "loadPriceChart"); return; }
 
@@ -1147,6 +1155,8 @@ function startAllTimers(){
 }
 
 function ensureChartBootstrapped(){
+  backupMarkDirty();
+
   if (!hasInternet()) return;
   if (!chart) initChartToday();
   if (!chart) return;
@@ -1203,7 +1213,7 @@ function setMode(isLive){
   liveMode = !!isLive;
   localStorage.setItem(MODE_KEY, liveMode ? "live" : "refresh");
 
-  if (liveIcon) liveIcon.textContent = liveMode ? "ðŸ“¡" : "âŸ³";
+  if (liveIcon) liveIcon.textContent = liveMode ? "&#128225;" : "&#10227;";
   if (modeHint) modeHint.textContent = `Mode: ${liveMode ? "LIVE" : "REFRESH"}`;
 
   modeLoading = true;
@@ -1283,6 +1293,8 @@ function startTradeWS() {
 
   wsTradeOnline = false;
   refreshConnUI();
+  backupMarkDirty();
+
   if (!hasInternet()) return;
 
   wsTrade = new WebSocket("wss://stream.binance.com:9443/ws/injusdt@trade");
@@ -1334,6 +1346,8 @@ function startKlineWS() {
 
   wsKlineOnline = false;
   refreshConnUI();
+  backupMarkDirty();
+
   if (!hasInternet()) return;
 
   const url =
@@ -1417,7 +1431,7 @@ async function loadAccount(isRefresh=false) {
     const del = (s.delegation_responses || []);
     stakeInj = del.reduce((a, d) => a + safe(d?.balance?.amount), 0) / 1e18;
 
-    // âœ… Validator card (top delegation)
+    //  Validator card (top delegation)
     try { updateValidatorFromDelegations(del); } catch {}
 
     // Rewards may fail sometimes; keep last known if so
@@ -1431,7 +1445,7 @@ async function loadAccount(isRefresh=false) {
       apr = safe(i.inflation) * 100;
     }
 
-    // âœ… APR change event
+    //  APR change event
     if (lastAprSeen == null) lastAprSeen = apr;
     else {
       const dApr = apr - lastAprSeen;
@@ -1439,7 +1453,7 @@ async function loadAccount(isRefresh=false) {
         pushEvent({
           kind: "apr",
           title: dApr > 0 ? "APR increased" : "APR decreased",
-          detail: `${(dApr>0?"+":"")}${dApr.toFixed(2)}% â€¢ Now ${apr.toFixed(2)}%`,
+          detail: `${(dApr>0?"+":"")}${dApr.toFixed(2)}% | Now ${apr.toFixed(2)}%`,
           dir: dApr > 0 ? "up" : "down",
           status: "done"
         });
@@ -1467,6 +1481,8 @@ async function loadAccount(isRefresh=false) {
 /* ================= BINANCE REST: snapshot candele 1D/1W/1M ================= */
 async function loadCandleSnapshot(isRefresh=false) {
   if (!isRefresh && !liveMode) return;
+  backupMarkDirty();
+
   if (!hasInternet()) return;
 
   const [d, w, m, y] = await Promise.all([
@@ -1475,7 +1491,7 @@ async function loadCandleSnapshot(isRefresh=false) {
     fetchJSON("https://api.binance.com/api/v3/klines?symbol=INJUSDT&interval=1M&limit=1"),
     fetchJSON("https://api.binance.com/api/v3/klines?symbol=INJUSDT&interval=1w&limit=52")
   ]);
-  // âœ… network ok
+  //  network ok
   markLastOk();
 
   if (Array.isArray(d) && d[0]) {
@@ -1615,7 +1631,7 @@ function updatePinnedOverlay() {
   const ts = labelToTs(label);
   const span = spanMsFromLabels(lbs);
   const lbl = ts ? fmtAxisX(ts, span) : String(label);
-  chartEl.textContent = `${lbl} â€¢ $${price.toFixed(4)}`;
+  chartEl.textContent = `${lbl} | $${price.toFixed(4)}`;
   overlay.classList.add("show");
 }
 
@@ -1721,6 +1737,8 @@ function initChartToday() {
 
 async function loadChartToday(isRefresh=false) {
   if (!isRefresh && !liveMode) return;
+  backupMarkDirty();
+
   if (!hasInternet()) return;
   if (!tfReady.d || !candle.d.t) return;
 
@@ -1891,7 +1909,6 @@ function saveStakeSeriesLocal() {
       labels: stakeLabels, data: stakeData, moves: stakeMoves, types: stakeTypes
     }));
     cloudBumpLocal(1);
-    backupTouchLocal();
   } catch {}
   cloudMarkDirty({ stake:true });
 }
@@ -1963,7 +1980,7 @@ function initStakeChart() {
   attachCrosshair2(stakeChart, $("stakeReadout"), (i, lbs, ds) => {
     const t = labelToTs(lbs?.[i]);
     const v = safe(ds?.[i]);
-    return `${t ? new Date(t).toLocaleString() : "â€”"} â€¢ ${v.toFixed(4)} INJ`;
+    return `${t ? new Date(t).toLocaleString() : "--"} | ${v.toFixed(4)} INJ`;
   });
 }
 function drawStakeChart() {
@@ -2051,7 +2068,6 @@ function saveWdAllLocal() {
       labels: wdLabelsAll, values: wdValuesAll, times: wdTimesAll
     }));
     cloudBumpLocal(1);
-    backupTouchLocal();
   } catch {}
   cloudMarkDirty({ wd:true });
 }
@@ -2136,7 +2152,7 @@ function initRewardWdChart() {
   attachCrosshair2(rewardChart, $("rewardReadout"), (i, lbs, ds) => {
     const t = labelToTs(lbs?.[i]) || (wdTimes?.[i] || 0);
     const v = safe(ds?.[i]);
-    return `${t ? new Date(t).toLocaleString() : "â€”"} â€¢ +${v.toFixed(6)} INJ`;
+    return `${t ? new Date(t).toLocaleString() : "--"} | +${v.toFixed(6)} INJ`;
   });
 }
 function drawRewardWdChart() {
@@ -2168,7 +2184,7 @@ function syncRewardTimelineUI(forceToEnd=false) {
   const n = wdValues.length;
   if (!n) {
     slider.min = 0; slider.max = 0; slider.value = 0;
-    meta.textContent = "â€”";
+    meta.textContent = "--";
     if (rewardChart) {
       rewardChart.options.scales.x.min = undefined;
       rewardChart.options.scales.x.max = undefined;
@@ -2196,7 +2212,7 @@ function syncRewardTimelineUI(forceToEnd=false) {
   const toTs   = wdTimes[maxIdx] || labelToTs(wdLabels[maxIdx]);
   const from = fromTs ? fmtHHMM(fromTs) : (wdLabels[minIdx] || "");
   const to   = toTs ? fmtHHMM(toTs) : (wdLabels[maxIdx] || "");
-  meta.textContent = n <= 1 ? `${to}` : `${from} â†’ ${to}`;
+  meta.textContent = n <= 1 ? `${to}` : `${from} -> ${to}`;
 }
 
 $("rewardTimeline")?.addEventListener("input", () => syncRewardTimelineUI(false), { passive: true });
@@ -2253,35 +2269,55 @@ function updateTotalRewardAccUI(){
   if (!out && !usd) return;
 
   const total = totalRewardsAccumulated();
-
-  // only touch DOM when it actually changes (animate() runs often)
-  if (!Number.isFinite(updateTotalRewardAccUI.__last)) updateTotalRewardAccUI.__last = total;
-  const prev = safe(updateTotalRewardAccUI.__last);
-
-  const changed = Math.abs(total - prev) > 1e-10;
-
-  // always show the + prefix
-  if (out && (changed || !out.textContent)){
-    out.textContent = `+${total.toFixed(6)}`;
-  }
-
-  // flash green only when it increases
-  if (changed && total > prev && card){
-    card.classList.remove("flash-green");
-    // restart animation
-    void card.offsetWidth;
-    card.classList.add("flash-green");
-  }
-
-  updateTotalRewardAccUI.__last = total;
+  const prev = Number.isFinite(updateTotalRewardAccUI.__last) ? updateTotalRewardAccUI.__last : total;
 
   const px = (Number.isFinite(displayed?.price) && displayed.price > 0) ? displayed.price
     : (Number.isFinite(targetPrice) && targetPrice > 0) ? targetPrice
     : 0;
 
-  if (usd){
-    usd.textContent = px ? `â‰ˆ $${(total * px).toFixed(4)}` : "â‰ˆ $â€”";
+  // Animate number when it increases (withdraw/reward collected)
+  const increased = Number.isFinite(total) && Number.isFinite(prev) && (total > prev + 1e-10);
+
+  function animateCount(el, from, to, decimals, durMs){
+    const start = performance.now();
+    const d = Math.max(250, Number(durMs) || 650);
+    const f0 = Number(from), f1 = Number(to);
+    const step = (now) => {
+      const p = Math.min(1, (now - start) / d);
+      const eased = 1 - Math.pow(1 - p, 3);
+      const v = f0 + (f1 - f0) * eased;
+      el.textContent = `+${v.toFixed(decimals)}`;
+      if (p < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
   }
+
+  if (out){
+    if (increased){
+      out.classList.add("num-burst-green","pulsing");
+      animateCount(out, prev, total, 6, 700);
+      setTimeout(() => out.classList.remove("pulsing"), 750);
+      // keep green for a moment
+      setTimeout(() => out.classList.remove("num-burst-green"), 1200);
+    } else if (!out.textContent) {
+      out.textContent = `+${Number.isFinite(total) ? total.toFixed(6) : "0.000000"}`;
+    } else if (Math.abs(total - prev) > 1e-10 && !increased) {
+      // decrease or small change: update instantly (no green)
+      out.textContent = `+${Number.isFinite(total) ? total.toFixed(6) : "0.000000"}`;
+    }
+  }
+
+  if (usd){
+    usd.textContent = px ? `~ $${(total * px).toFixed(4)}` : "~ $--";
+  }
+
+  if (increased && card){
+    card.classList.remove("flash-green");
+    void card.offsetWidth;
+    card.classList.add("flash-green");
+  }
+
+  updateTotalRewardAccUI.__last = total;
 }
 
   wdLastRewardsSeen = r;
@@ -2291,8 +2327,6 @@ function updateTotalRewardAccUI(){
 let nwTf = "live";
 let nwScale = "linear";
 let nwTAll = [];
-let nwSessionStartAt = Date.now(); // anchor for LIVE (session)
-
 let nwUsdAll = [];
 let nwInjAll = [];
 
@@ -2328,7 +2362,6 @@ function saveNWLocal(){
       scale: nwScale
     }));
     cloudBumpLocal(1);
-    backupTouchLocal();
   } catch {}
   cloudMarkDirty({ nw:true });
 }
@@ -2353,77 +2386,98 @@ function loadNWLocal(){
 }
 
 function startOfDay(ts){
-  const d = new Date(ts);
-  d.setHours(0,0,0,0);
-  return d.getTime();
+  const d = new Date(ts); d.setHours(0,0,0,0); return d.getTime();
 }
 function startOfWeek(ts){
   const d = new Date(ts);
-  const day = (d.getDay() + 6) % 7; // Monday=0
+  const day = (d.getDay() + 6) % 7; // monday=0
   d.setHours(0,0,0,0);
   d.setDate(d.getDate() - day);
   return d.getTime();
 }
 function startOfMonth(ts){
-  const d = new Date(ts);
-  d.setHours(0,0,0,0);
-  d.setDate(1);
-  return d.getTime();
+  const d = new Date(ts); d.setHours(0,0,0,0); d.setDate(1); return d.getTime();
 }
 function startOfYear(ts){
-  const d = new Date(ts);
-  d.setHours(0,0,0,0);
-  d.setMonth(0,1);
-  return d.getTime();
+  const d = new Date(ts); d.setHours(0,0,0,0); d.setMonth(0,1); return d.getTime();
 }
-
 function nwRangeForTf(tf){
   const now = Date.now();
   if (tf === "live"){
-    // first 15m from session start, then rolling window
-    const start = (now - nwSessionStartAt < NW_LIVE_WINDOW_MS)
-      ? (nwSessionStartAt || now)
-      : (now - NW_LIVE_WINDOW_MS);
+    const start = (now - (nwSessionStartAt||now) < NW_LIVE_WINDOW_MS) ? (nwSessionStartAt||now) : (now - NW_LIVE_WINDOW_MS);
     return { start, end: now };
   }
   if (tf === "1d") return { start: startOfDay(now), end: now };
   if (tf === "1w") return { start: startOfWeek(now), end: now };
   if (tf === "1m") return { start: startOfMonth(now), end: now };
   if (tf === "1y") return { start: startOfYear(now), end: now };
-
   const first = nwTAll.length ? Number(nwTAll[0]) : 0;
   return { start: first || 0, end: now };
+}
+function nwWindowMs(tf){
+  if (tf === "live") return NW_LIVE_WINDOW_MS;
+  if (tf === "1w") return 7 * 24 * 60 * 60 * 1000;
+  if (tf === "1m") return 30 * 24 * 60 * 60 * 1000;
+  if (tf === "1y") return 365 * 24 * 60 * 60 * 1000;
+  if (tf === "all") return 10 * 365 * 24 * 60 * 60 * 1000;
+  return 24 * 60 * 60 * 1000; // 1d
 }
 
 function nwHasSpan(tf){
   if (!nwTAll.length) return false;
-  const r = nwRangeForTf(tf);
-  let first = 0, last = 0;
-  for (let i=0;i<nwTAll.length;i++){
-    const t = Number(nwTAll[i]);
-    if (t >= r.start){ first = t; break; }
-  }
-  for (let i=nwTAll.length-1;i>=0;i--){
-    const t = Number(nwTAll[i]);
-    if (t >= r.start && t <= r.end){ last = t; break; }
-  }
-  return !!(first && last && (last - first) >= 2 * 60 * 1000);
+  const first = nwTAll[0];
+  const span = Date.now() - first;
+  return span >= nwWindowMs(tf) * 0.8;
 }
-
 function nwBuildView(tf){
   const r = nwRangeForTf(tf);
   const labels = [];
   const data = [];
-  for (let i=0;i<nwTAll.length;i++){
-    const t = Number(nwTAll[i]);
-    const u = Number(nwUsdAll[i]);
-    if (t >= r.start && t <= r.end && Number.isFinite(u) && u > 0){
+
+  for (let i = 0; i < nwTAll.length; i++){
+    const t = safe(nwTAll[i]);
+    const u = safe(nwUsdAll[i]);
+    if (t >= r.start && t <= r.end && Number.isFinite(u) && u > 0) {
       labels.push(tsLabel(t));
       data.push(u);
     }
   }
   return { labels, data };
 }
+
+const nwLastDotPlugin = {
+  id: "nwLastDotPlugin",
+  afterDatasetsDraw(ch) {
+    const meta = ch.getDatasetMeta(0);
+    const pts = meta?.data || [];
+    if (!pts.length) return;
+
+    const el = pts[pts.length - 1];
+    if (!el) return;
+
+    const t = Date.now();
+    const pulse = 0.35 + 0.65 * Math.abs(Math.sin(t / 320));
+
+    const ctx = ch.ctx;
+    ctx.save();
+    ctx.shadowColor = `rgba(250,204,21,${0.35 * pulse})`;
+    ctx.shadowBlur = 10;
+
+    ctx.beginPath();
+    ctx.arc(el.x, el.y, 6.5, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(250,204,21,${0.22 * pulse})`;
+    ctx.fill();
+
+    ctx.shadowBlur = 0;
+    ctx.beginPath();
+    ctx.arc(el.x, el.y, 3.2, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(250,204,21,${0.95 * pulse})`;
+    ctx.fill();
+
+    ctx.restore();
+  }
+};
+
 function initNWChart(){
   const canvas = $("netWorthChart");
   if (!canvas || !window.Chart) return;
@@ -2497,7 +2551,7 @@ function initNWChart(){
   attachCrosshair2(netWorthChart, $("nwReadout"), (i, lbs, ds) => {
     const t = labelToTs(lbs?.[i]);
     const v = safe(ds?.[i]);
-    return `${t ? fmtHHMM(t) : "â€”"} â€¢ $${v.toFixed(2)}`;
+    return `${t ? fmtHHMM(t) : "--"} | $${v.toFixed(2)}`;
   });
 }
 
@@ -2554,7 +2608,7 @@ function drawNW(force=false){
     if (pnlEl){
       pnlEl.classList.remove("good","bad");
       pnlEl.classList.add("flat");
-      pnlEl.textContent = "PnL: â€”";
+      pnlEl.textContent = "PnL: --";
     }
   }
 
@@ -2565,7 +2619,7 @@ function drawNW(force=false){
     const lbs = netWorthChart.data.labels || [];
     if (ds.length) {
       const i = ds.length - 1;
-      $("nwReadout").textContent = `${labelToTs(lbs[i]) ? fmtHHMM(labelToTs(lbs[i])) : "â€”"} â€¢ $${safe(ds[i]).toFixed(2)}`;
+      $("nwReadout").textContent = `${labelToTs(lbs[i]) ? fmtHHMM(labelToTs(lbs[i])) : "--"} | $${safe(ds[i]).toFixed(2)}`;
     }
   }
 }
@@ -2639,152 +2693,6 @@ function recordNetWorthPoint(){
 /* ================= CLOUD SYNC ================= */
 const CLOUD_VER = 2;
 const CLOUD_KEY = `inj_cloudmeta_v${CLOUD_VER}`;
-/* ================= BACKUP (per-wallet) ================= */
-const BACKUP_VER = 1;
-const BACKUP_LOCAL_PREFIX = `inj_backup_v${BACKUP_VER}_`;
-const BACKUP_META_PREFIX  = `inj_backupmeta_v${BACKUP_VER}_`;
-const API_BASE_KEY = "inj_api_base"; // set if hosting UI outside Vercel (e.g. github pages)
-
-function normBase(u){
-  return String(u||"").trim().replace(/\/+$/, "");
-}
-function getApiBase(){
-  try{ return normBase(localStorage.getItem(API_BASE_KEY) || ""); }catch{ return ""; }
-}
-function setApiBase(u){
-  const v = normBase(u);
-  try{
-    if (v) localStorage.setItem(API_BASE_KEY, v);
-    else localStorage.removeItem(API_BASE_KEY);
-  }catch{}
-  return v;
-}
-function apiUrl(path){
-  const base = getApiBase();
-  return base ? (base + path) : path;
-}
-
-let backupMeta = { localAt: 0, cloudAt: 0, cloudState: "â€”", cloudErr: "" };
-
-function backupMetaKey(addr){
-  const a = String(addr||"").trim();
-  return a ? (BACKUP_META_PREFIX + a) : null;
-}
-function backupLocalKey(addr){
-  const a = String(addr||"").trim();
-  return a ? (BACKUP_LOCAL_PREFIX + a) : null;
-}
-function backupLoadMeta(){
-  const k = backupMetaKey(address);
-  if (!k) { backupMeta = { localAt: 0, cloudAt: 0, cloudState:"â€”", cloudErr:"" }; return; }
-  try{
-    const raw = localStorage.getItem(k);
-    if (!raw) { backupMeta = { localAt: 0, cloudAt: 0, cloudState:"â€”", cloudErr:"" }; return; }
-    const o = JSON.parse(raw);
-    backupMeta = {
-      localAt: Number(o?.localAt || 0),
-      cloudAt: Number(o?.cloudAt || 0),
-      cloudState: String(o?.cloudState || "â€”"),
-      cloudErr: String(o?.cloudErr || "")
-    };
-  }catch{
-    backupMeta = { localAt: 0, cloudAt: 0, cloudState:"â€”", cloudErr:"" };
-  }
-}
-function backupSaveMeta(){
-  const k = backupMetaKey(address);
-  if (!k) return;
-  try{ localStorage.setItem(k, JSON.stringify(backupMeta)); }catch{}
-}
-function fmtTs(ts){
-  const t = Number(ts||0);
-  if (!t) return "â€”";
-  try{
-    const d = new Date(t);
-    return d.toLocaleString(undefined, { year:"numeric", month:"2-digit", day:"2-digit", hour:"2-digit", minute:"2-digit", second:"2-digit" });
-  }catch{ return String(t); }
-}
-function backupRenderUI(){
-  setText("backupLocalLast", fmtTs(backupMeta.localAt));
-  setText("backupCloudLast", fmtTs(backupMeta.cloudAt));
-  setText("backupCloudState", backupMeta.cloudState || "â€”");
-
-  const note = backupMeta.cloudErr ? `Last cloud error: ${backupMeta.cloudErr}` : (getApiBase() ? `Using Cloud API base: ${getApiBase()}` : "â€”");
-  setText("backupNote", note);
-
-  const inp = $("apiBaseInput");
-  if (inp && document.activeElement !== inp) inp.value = getApiBase();
-}
-function backupTouchLocal(){
-  if (!address) return;
-  backupMeta.localAt = Date.now();
-  backupSaveMeta();
-}
-function backupSaveLocalSnapshot(){
-  if (!address) return;
-  const k = backupLocalKey(address);
-  if (!k) return;
-  const payload = buildCloudPayload();
-  const snap = { v: BACKUP_VER, address, t: Date.now(), payload };
-  try{ localStorage.setItem(k, JSON.stringify(snap)); }catch{}
-  backupTouchLocal();
-}
-async function backupPushNow(){
-  if (!address) return;
-  if (!hasInternet()) {
-    backupMeta.cloudState = "OFFLINE";
-    backupMeta.cloudErr = "offline";
-    backupSaveMeta();
-    backupRenderUI();
-    return;
-  }
-
-  backupMeta.cloudState = "SAVING";
-  backupMeta.cloudErr = "";
-  backupSaveMeta();
-  backupRenderUI();
-
-  const url = `${apiUrl(CLOUD_API)}?address=${encodeURIComponent(address)}`;
-  const payload = buildCloudPayload();
-
-  try{
-    const res = await fetch(url, {
-      method: "POST",
-      cache: "no-store",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-
-    const txt = await res.text();
-    let data = null;
-    try{ data = txt ? JSON.parse(txt) : null; }catch{ data = null; }
-
-    if (!res.ok || !data?.ok){
-      const msg = data?.error ? String(data.error) : (txt ? txt.slice(0,160) : `HTTP ${res.status}`);
-      backupMeta.cloudState = "ERROR";
-      backupMeta.cloudErr = `HTTP ${res.status} â€¢ ${msg}`;
-      backupSaveMeta();
-      backupRenderUI();
-      pushEvent({ kind:"info", title:"Cloud backup error", detail: backupMeta.cloudErr, status:"fail" });
-      return;
-    }
-
-    backupMeta.cloudState = "SYNCED";
-    backupMeta.cloudAt = Number(data?.t || Date.now());
-    backupMeta.cloudErr = "";
-    backupSaveMeta();
-    backupRenderUI();
-    pushEvent({ kind:"info", title:"Backup synced", detail:"Cloud snapshot saved", status:"ok" });
-
-  }catch(e){
-    backupMeta.cloudState = "ERROR";
-    backupMeta.cloudErr = String(e?.message || e);
-    backupSaveMeta();
-    backupRenderUI();
-    pushEvent({ kind:"info", title:"Cloud backup error", detail: backupMeta.cloudErr, status:"fail" });
-  }
-}
-
 let cloudPts = 0;
 let cloudLastSync = 0;
 let cloudDirty = false;
@@ -2805,6 +2713,267 @@ function cloudLoadMeta(){
 function cloudSaveMeta(){
   try{ localStorage.setItem(CLOUD_KEY, JSON.stringify({ v:CLOUD_VER, pts: cloudPts, lastSync: cloudLastSync })); } catch {}
 }
+
+/* ================= BACKUP (per-address snapshot) ================= */
+function backupMetaKey(addr){
+  const a = (addr || address || "").trim();
+  return a ? `${BACKUP_META_PREFIX}${a}` : null;
+}
+function backupKey(addr){
+  const a = (addr || address || "").trim();
+  return a ? `${BACKUP_LOCAL_PREFIX}${a}` : null;
+}
+let backupMeta = { localAt:0, cloudAt:0, cloudState:"--", cloudErr:"" };
+
+function backupLoadMeta(){
+  const k = backupMetaKey();
+  if (!k) return;
+  try{
+    const o = JSON.parse(localStorage.getItem(k) || "null");
+    if (o && typeof o === "object") backupMeta = { ...backupMeta, ...o };
+  }catch{}
+}
+function backupSaveMeta(){
+  const k = backupMetaKey();
+  if (!k) return;
+  try{ localStorage.setItem(k, JSON.stringify(backupMeta)); }catch{}
+}
+
+function getApiBase(){
+  try{
+    const v = (localStorage.getItem("inj_api_base") || "").trim();
+    return v ? v.replace(/\/+$/,"") : "";
+  }catch{ return ""; }
+}
+function setApiBase(v){
+  try{
+    const s = String(v||"").trim().replace(/\/+$/,"");
+    if (!s) localStorage.removeItem("inj_api_base");
+    else localStorage.setItem("inj_api_base", s);
+  }catch{}
+}
+function apiUrl(path){
+  const base = getApiBase();
+  if (!base) return path;
+  if (/^https?:\/\//i.test(path)) return path;
+  return `${base}${path.startsWith("/") ? "" : "/"}${path}`;
+}
+
+function fmtTs(ts){
+  const t = Number(ts||0);
+  if (!t) return "--";
+  try{
+    const d = new Date(t);
+    return d.toLocaleString(undefined, { year:"numeric", month:"2-digit", day:"2-digit", hour:"2-digit", minute:"2-digit" });
+  }catch{ return "--"; }
+}
+
+function backupRenderUI(){
+  setText("backupLocalLast", fmtTs(backupMeta.localAt));
+  setText("backupCloudLast", fmtTs(backupMeta.cloudAt));
+  setText("backupCloudState", backupMeta.cloudState || "--");
+  const note = backupMeta.cloudErr ? `Last cloud error: ${backupMeta.cloudErr}` : (getApiBase() ? `Using Cloud API base: ${getApiBase()}` : "--");
+  setText("backupNote", note);
+
+  const inp = $("apiBaseInput");
+  if (inp && document.activeElement !== inp) inp.value = getApiBase();
+}
+
+let backupDirty = false;
+let backupPushTimer = 0;
+
+function backupMarkDirty(){
+  if (!address) return;
+  backupDirty = true;
+  scheduleBackupLocalSave(false);
+  scheduleBackupPush();
+}
+
+let backupLocalTimer = 0;
+function scheduleBackupLocalSave(forceUI){
+  if (backupLocalTimer) return;
+  backupLocalTimer = setTimeout(() => {
+    backupLocalTimer = 0;
+    backupSaveLocalNow(!!forceUI);
+  }, 1200);
+}
+
+function backupSaveLocalNow(forceUI){
+  if (!address) return;
+  try{
+    const payload = buildCloudPayload();
+    const snap = { v: BACKUP_VER, address, t: Date.now(), data: payload };
+    const k = backupKey(address);
+    if (k) localStorage.setItem(k, JSON.stringify(snap));
+    backupMeta.localAt = snap.t;
+    backupSaveMeta();
+    if (forceUI) backupRenderUI();
+  }catch(e){}
+}
+
+function scheduleBackupPush(){
+  if (!address) return;
+  if (backupPushTimer) return;
+  backupPushTimer = setTimeout(() => {
+    backupPushTimer = 0;
+    safeAsync(() => backupPushNow(), "backupPushNow");
+  }, BACKUP_PUSH_DEBOUNCE_MS);
+}
+
+async function backupPushNow(){
+  if (!address) return;
+  if (!hasInternet()){
+    backupMeta.cloudState = "OFFLINE";
+    backupMeta.cloudErr = "offline";
+    backupSaveMeta();
+    backupRenderUI();
+    return;
+  }
+  if (backupLastFailAt && (Date.now() - backupLastFailAt) < BACKUP_FAIL_COOLDOWN_MS){
+    return;
+  }
+
+  backupMeta.cloudState = "SAVING";
+  backupMeta.cloudErr = "";
+  backupSaveMeta();
+  backupRenderUI();
+
+  // build payload
+  let payload = null;
+  try{
+    payload = buildCloudPayload();
+  }catch{
+    payload = null;
+  }
+  if (!payload){
+    backupMeta.cloudState = "ERROR";
+    backupMeta.cloudErr = "payload build failed";
+    backupSaveMeta(); backupRenderUI();
+    return;
+  }
+
+  // snapshot wrapper
+  let body = { address, t: Date.now(), v: BACKUP_VER, data: payload };
+
+  // size guard + optional downsample if huge
+  const enc = new TextEncoder();
+  let bytes = enc.encode(JSON.stringify(body)).length;
+  if (bytes > 900_000){
+    // downsample NW older points to keep within limit
+    const nw = body.data?.nw;
+    if (nw && Array.isArray(nw.times) && nw.times.length > 6000){
+      const cut = Math.max(4000, Math.floor(nw.times.length * 0.35));
+      const keepTail = 5000;
+      const headN = Math.max(0, nw.times.length - keepTail);
+      const step = Math.max(2, Math.floor(headN / cut));
+      const pick = (arr) => arr.filter((_,i)=> i>=headN ? true : (i % step === 0));
+      nw.times = pick(nw.times);
+      nw.usd = pick(nw.usd);
+      nw.inj = pick(nw.inj);
+    }
+    bytes = enc.encode(JSON.stringify(body)).length;
+  }
+
+  try{
+    const url = `${apiUrl(BACKUP_API)}?address=${encodeURIComponent(address)}`;
+    const res = await fetch(url, {
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify(body)
+    });
+    const txt = await res.text();
+    let data = null;
+    try{ data = txt ? JSON.parse(txt) : null; }catch{ data = null; }
+
+    if (!res.ok || !data?.ok){
+      const msg = data?.error ? String(data.error) : (txt ? txt.slice(0,160) : `HTTP ${res.status}`);
+      backupLastFailAt = Date.now();
+      backupMeta.cloudState = "ERROR";
+      backupMeta.cloudErr = `HTTP ${res.status} | ${msg}`;
+      backupSaveMeta(); backupRenderUI();
+      pushEvent({ kind:"info", title:"Cloud backup error", detail: backupMeta.cloudErr, status:"fail" });
+      return;
+    }
+
+    backupMeta.cloudState = "SYNCED";
+    backupMeta.cloudAt = Number(data?.t || Date.now());
+    backupMeta.cloudErr = "";
+    backupSaveMeta(); backupRenderUI();
+  }catch(e){
+    backupLastFailAt = Date.now();
+    backupMeta.cloudState = "ERROR";
+    backupMeta.cloudErr = String(e?.message || e);
+    backupSaveMeta(); backupRenderUI();
+    pushEvent({ kind:"info", title:"Cloud backup error", detail: backupMeta.cloudErr, status:"fail" });
+  }
+}
+
+async function backupPullNow(){
+  if (!address) return;
+  if (!hasInternet()){
+    backupMeta.cloudState = "OFFLINE";
+    backupSaveMeta();
+    backupRenderUI();
+    return;
+  }
+  try{
+    backupMeta.cloudState = "LOADING";
+    backupMeta.cloudErr = "";
+    backupSaveMeta(); backupRenderUI();
+
+    const url = `${apiUrl(BACKUP_API)}?address=${encodeURIComponent(address)}`;
+    const res = await fetch(url, { cache:"no-store" });
+    const txt = await res.text();
+    let out = null;
+    try{ out = txt ? JSON.parse(txt) : null; }catch{ out = null; }
+    if (!res.ok || !out?.ok){
+      const msg = out?.error ? String(out.error) : (txt ? txt.slice(0,160) : `HTTP ${res.status}`);
+      backupLastFailAt = Date.now();
+      backupMeta.cloudState = "ERROR";
+      backupMeta.cloudErr = `HTTP ${res.status} | ${msg}`;
+      backupSaveMeta(); backupRenderUI();
+      return;
+    }
+    if (!out.data){
+      backupMeta.cloudState = "SYNCED";
+      backupMeta.cloudAt = 0;
+      backupMeta.cloudErr = "";
+      backupSaveMeta(); backupRenderUI();
+      return;
+    }
+
+    const data = out.data?.data || out.data; // accept either wrapper or direct
+    if (data){
+      mergeStakeByLabel(data.stake);
+      mergeWd(data.wd);
+      mergeNW(data.nw);
+      mergeEvents(data.events);
+
+      saveStakeSeriesLocal();
+      saveWdAllLocal();
+      saveNWLocal();
+      saveEvents();
+
+      rebuildWdView();
+      drawNW(true);
+      drawStakeChart();
+      drawRewardWdChart();
+      renderEvents();
+    }
+
+    backupMeta.cloudState = "SYNCED";
+    backupMeta.cloudAt = Number(out?.t || out.data?.t || Date.now());
+    backupMeta.cloudErr = "";
+    backupSaveMeta(); backupRenderUI();
+  }catch(e){
+    backupLastFailAt = Date.now();
+    backupMeta.cloudState = "ERROR";
+    backupMeta.cloudErr = String(e?.message || e);
+    backupSaveMeta(); backupRenderUI();
+  }
+}
+
+
 function cloudSetState(state){
   const st = $("cloudStatus");
   if (st){
@@ -2826,7 +2995,7 @@ function cloudSetState(state){
       : hasInternet() ? "Synced" : "Offline cache";
   }
   if (cloudLastMenu){
-    cloudLastMenu.textContent = cloudLastSync ? new Date(cloudLastSync).toLocaleString() : "â€”";
+    cloudLastMenu.textContent = cloudLastSync ? new Date(cloudLastSync).toLocaleString() : "--";
   }
 
   // Advanced settings monitor
@@ -2844,11 +3013,11 @@ function cloudSetState(state){
   }
   if (advSt) {
     advSt.textContent =
-      (state === "saving") ? (hasInternet() ? "Saving to Cloudâ€¦" : "Offline cache") :
+      (state === "saving") ? (hasInternet() ? "Saving to Cloud..." : "Offline cache") :
       (state === "error") ? "Cloud error" :
       (hasInternet() ? "Cloud synced" : "Offline cache");
   }
-  if (advLast) advLast.textContent = cloudLastSync ? new Date(cloudLastSync).toLocaleString() : "â€”";
+  if (advLast) advLast.textContent = cloudLastSync ? new Date(cloudLastSync).toLocaleString() : "--";
   if (advPts) advPts.textContent = String(Math.max(0, Math.floor(safe(cloudPts))));
   if (advWhat){
     const list = [];
@@ -2856,14 +3025,14 @@ function cloudSetState(state){
     if (cloudDirtyWhat.wd) list.push("Rewards");
     if (cloudDirtyWhat.nw) list.push("NetWorth");
     if (cloudDirtyWhat.events) list.push("Events");
-    advWhat.textContent = list.length ? list.join(", ") : (state === "saving" ? "Preparingâ€¦" : "â€”");
+    advWhat.textContent = list.length ? list.join(", ") : (state === "saving" ? "Preparing..." : "--");
   }
 }
 function cloudRenderMeta(){
   const hist = $("cloudHistory");
-  if (hist) hist.textContent = `Â· ${Math.max(0, Math.floor(cloudPts))} pts`;
+  if (hist) hist.textContent = ` ${Math.max(0, Math.floor(cloudPts))} pts`;
   if (cloudLastMenu){
-    cloudLastMenu.textContent = cloudLastSync ? new Date(cloudLastSync).toLocaleString() : "â€”";
+    cloudLastMenu.textContent = cloudLastSync ? new Date(cloudLastSync).toLocaleString() : "--";
   }
   cloudSetState("synced");
 }
@@ -2880,6 +3049,8 @@ function cloudMarkDirty(what = {}){
   if (what?.wd) cloudDirtyWhat.wd = true;
   if (what?.nw) cloudDirtyWhat.nw = true;
   if (what?.events) cloudDirtyWhat.events = true;
+
+  backupMarkDirty();
 
   if (!hasInternet()) return;
   scheduleCloudPush();
@@ -2996,7 +3167,7 @@ async function cloudPull(){
   if (!address) return;
   if (!hasInternet()) { cloudSetState("synced"); return; }
 
-  const url = `${apiUrl(CLOUD_API)}?address=${encodeURIComponent(address)}`;
+  const url = `${CLOUD_API}?address=${encodeURIComponent(address)}`;
   const res = await fetchJSON(url);
   if (!res?.ok) { cloudLastFailAt = Date.now();
     cloudSetState("error"); return; }
@@ -3005,7 +3176,7 @@ async function cloudPull(){
   try{
     const data = res.data;
 
-    // âœ… merge solo del tuo address, payload Ã¨ per-address giÃ  dal server
+    //  merge solo del tuo address, payload  per-address gi dal server
     mergeStakeByLabel(data.stake);
     mergeWd(data.wd);
     mergeNW(data.nw);
@@ -3034,12 +3205,14 @@ async function cloudPull(){
 
 async function cloudPush(){
   if (!address) return;
+  backupMarkDirty();
+
   if (!hasInternet()) return;
   if (!cloudDirty) return;
 
   cloudSetState("saving");
 
-  const url = `${apiUrl(CLOUD_API)}?address=${encodeURIComponent(address)}`;
+  const url = `${CLOUD_API}?address=${encodeURIComponent(address)}`;
   const payload = buildCloudPayload();
 
   const res = await fetchJSON(url, {
@@ -3163,32 +3336,6 @@ function attachCrosshair(ch, overlayEl, formatter){
   canvas.addEventListener("touchcancel", leave, { passive:true });
 }
 
-
-function initBackupUI(){
-  const saveBtn = $("apiBaseSaveBtn");
-  saveBtn?.addEventListener("click", (e) => {
-    e?.preventDefault?.();
-    const v = $("apiBaseInput")?.value || "";
-    const b = setApiBase(v);
-    backupMeta.cloudErr = "";
-    backupSaveMeta();
-    backupRenderUI();
-    pushEvent({ kind:"info", title:"Cloud API base saved", detail: b ? b : "Cleared (relative /api)", status:"ok" });
-  }, { passive:false });
-
-  const bBtn = $("backupNowBtn");
-  bBtn?.addEventListener("click", (e) => {
-    e?.preventDefault?.();
-    if (!address) {
-      pushEvent({ kind:"info", title:"Backup", detail:"Insert a wallet address first", status:"fail" });
-      return;
-    }
-    backupSaveLocalSnapshot();
-    safeAsync(() => backupPushNow(), "backupPushNow");
-  }, { passive:false });
-}
-
-
 /* ================= SETTINGS (Advanced settings) ================= */
 const advBtn = $("advAccBtn");
 const advBody = $("advAccBody");
@@ -3205,38 +3352,33 @@ async function fetchPublicIP(){
     const r = await fetch("https://api.ipify.org?format=json", { cache:"no-store", signal: ctrl.signal });
     if (!r.ok) throw new Error("bad");
     const j = await r.json();
-    return String(j?.ip || "â€”");
-  } catch { return "â€”"; }
+    return String(j?.ip || "--");
+  } catch { return "--"; }
   finally { clearTimeout(t); }
 }
 
 async function renderSettingsSnapshot(){
   setText("settingsTheme", (document.body.dataset.theme || "dark").toUpperCase());
   setText("settingsMode", (liveMode ? "LIVE" : "REFRESH"));
-  setText("settingsWallet", address || "â€”");
+  setText("settingsWallet", address || "--");
 
   // Card layout (reorder)
   renderCardOrderUI();
 
-  setText("deviceTz", Intl.DateTimeFormat().resolvedOptions().timeZone || "â€”");
-  setText("deviceLang", navigator.language || "â€”");
-  setText("devicePlatform", navigator.platform || "â€”");
-  setText("deviceScreen", `${window.screen?.width || "?"}Ã—${window.screen?.height || "?"} â€¢ DPR ${window.devicePixelRatio || 1}`);
+  setText("deviceTz", Intl.DateTimeFormat().resolvedOptions().timeZone || "--");
+  setText("deviceLang", navigator.language || "--");
+  setText("devicePlatform", navigator.platform || "--");
+  setText("deviceScreen", `${window.screen?.width || "?"}x${window.screen?.height || "?"} | DPR ${window.devicePixelRatio || 1}`);
 
   const c = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-  const conn = c ? `${c.effectiveType || "?"}${c.downlink ? ` â€¢ ${c.downlink}Mb/s` : ""}${c.rtt ? ` â€¢ ${c.rtt}ms` : ""}` : "â€”";
+  const conn = c ? `${c.effectiveType || "?"}${c.downlink ? ` | ${c.downlink}Mb/s` : ""}${c.rtt ? ` | ${c.rtt}ms` : ""}` : "--";
   setText("deviceConn", conn);
 
   const ipEl = $("deviceIp");
-  if (ipEl && (ipEl.textContent === "â€”" || !ipEl.textContent)) {
+  if (ipEl && (ipEl.textContent === "--" || !ipEl.textContent)) {
     const ip = await fetchPublicIP();
     setText("deviceIp", ip);
   }
-
-  // Backup (per wallet)
-  backupLoadMeta();
-  backupRenderUI();
-
 }
 
 /* ================= ADDRESS COMMIT (FIX: no mixing between addresses) ================= */
@@ -3273,9 +3415,9 @@ function resetPerAddressStateUI(){
       try { netWorthChart.update("none"); } catch(e){ console.warn("[netWorthChart.update]", e); }
     }
     // readouts
-    setText("stakeReadout", "â€”");
-    setText("rewardReadout", "â€”");
-    setText("nwReadout", "â€”");
+    setText("stakeReadout", "--");
+    setText("rewardReadout", "--");
+    setText("nwReadout", "--");
   } catch {}
 }
 
@@ -3290,13 +3432,12 @@ async function commitAddress(newAddr) {
   }
 
   address = a;
-  nwSessionStartAt = Date.now();
   localStorage.setItem("inj_address", address);
 
   setAddressDisplay(address);
   settleStart = Date.now();
 
-  // âœ… FIX: reset all per-address in-memory state (prevents mixing)
+  //  FIX: reset all per-address in-memory state (prevents mixing)
   resetPerAddressStateUI();
 
   availableInj = 0; stakeInj = 0; rewardsInj = 0; apr = 0;
@@ -3308,7 +3449,7 @@ async function commitAddress(newAddr) {
 
   wdMinFilter = safe($("rewardFilter")?.value || 0);
 
-  // âœ… Restore last known values instantly (offline-friendly) for this address
+  //  Restore last known values instantly (offline-friendly) for this address
   try{
     if (address) {
       const snap = loadAccountSnapshot(address);
@@ -3336,6 +3477,10 @@ async function commitAddress(newAddr) {
 
   modeLoading = true;
   refreshConnUI();
+  backupLoadMeta();
+  backupRenderUI();
+  safeAsync(() => backupPullNow(), "backupPullNow");
+
   renderSettingsSnapshot();
 
   if (liveMode) await loadAccount();
@@ -3374,8 +3519,8 @@ window.addEventListener("offline", () => {
 
 
 /* ================= INTEGRATIONS_V20260206 =================
-   Privacy toggle (A: blur) â€¢ Targets modal â€¢ Events PRO filters
-   Price Chart Timeframes â€¢ APR Chart series â€¢ Validator card
+   Privacy toggle (A: blur) | Targets modal | Events PRO filters
+   Price Chart Timeframes | APR Chart series | Validator card
    Dynamic axes + crosshair only on interaction + blinking last dot
    ========================================================= */
 
@@ -3388,7 +3533,7 @@ function applyPrivacy(on){
   document.body.classList.toggle("privacy-on", privacyOn);
   try { localStorage.setItem(PRIVACY_KEY, privacyOn ? "1" : "0"); } catch {}
   const ico = $("privacyIcon");
-  if (ico) ico.textContent = privacyOn ? "ðŸ™ˆ" : "ðŸ‘ï¸";
+  if (ico) ico.innerHTML = privacyOn ? "&#128584;" : "&#128065;";
 }
 $("privacyToggle")?.addEventListener("click", (e) => {
   e?.preventDefault?.();
@@ -3550,7 +3695,7 @@ function attachCrosshair2(ch, overlayEl, formatter){
     try{
       overlayEl.textContent = formatter(idx, lbs, ds);
     } catch {
-      overlayEl.textContent = "â€”";
+      overlayEl.textContent = "--";
     }
 
     try { ch.update("none"); } catch {}
@@ -3779,6 +3924,8 @@ async function fetchKlinesRange(symbol, interval, startTime, endTime, maxTotal=2
 }
 
 async function loadPriceChart(force=false){
+  backupMarkDirty();
+
   if (!hasInternet()) return;
   if (!chart) initChartToday();
   if (!chart) return;
@@ -3968,7 +4115,7 @@ function initAprChart(){
   attachCrosshair2(aprChart, $("aprReadout"), (i, lbs, ds) => {
     const t = labelToTs(lbs?.[i]);
     const v = safe(ds?.[i]);
-    return `${t ? new Date(t).toLocaleString() : "â€”"} â€¢ ${v.toFixed(2)}%`;
+    return `${t ? new Date(t).toLocaleString() : "--"} | ${v.toFixed(2)}%`;
   });
 }
 function drawAprChart(){
@@ -4015,7 +4162,7 @@ async function updateValidatorFromDelegations(delegation_responses){
 
   const del = Array.isArray(delegation_responses) ? delegation_responses : [];
   if (!del.length){
-    elName.textContent = "â€”";
+    elName.textContent = "--";
     elMeta.textContent = "No delegations";
     return;
   }
@@ -4027,7 +4174,7 @@ async function updateValidatorFromDelegations(delegation_responses){
   }
   const val = String(best?.delegation?.validator_address || "");
   if (!val){
-    elName.textContent = "â€”";
+    elName.textContent = "--";
     elMeta.textContent = "Validator not found";
     return;
   }
@@ -4035,7 +4182,7 @@ async function updateValidatorFromDelegations(delegation_responses){
   const moniker = v?.description?.moniker || shortAddr(val);
   const rate = safe(v?.commission?.commission_rates?.rate) * 100;
   elName.textContent = moniker;
-  elMeta.textContent = `${shortAddr(val)} â€¢ Commission ${Number.isFinite(rate) ? rate.toFixed(2) : "â€”"}%`;
+  elMeta.textContent = `${shortAddr(val)} | Commission ${Number.isFinite(rate) ? rate.toFixed(2) : "--"}%`;
 }
 
 
@@ -4058,11 +4205,11 @@ function updateValidatorFeeUI(){
              (Number.isFinite(targetPrice) && targetPrice > 0) ? targetPrice : 0;
 
   if (!px){
-    el.textContent = `Fee tx: ${feeInj.toFixed(6)} INJ â€¢ â‰ˆ $â€”`;
+    el.textContent = `Fee tx: ${feeInj.toFixed(6)} INJ | ~ $--`;
     return;
   }
   const feeUsd = feeInj * px;
-  el.textContent = `Fee tx: ${feeInj.toFixed(6)} INJ â€¢ â‰ˆ $${fmtSmart(feeUsd)}`;
+  el.textContent = `Fee tx: ${feeInj.toFixed(6)} INJ | ~ $${fmtSmart(feeUsd)}`;
 }
 
 
@@ -4179,7 +4326,7 @@ renderEvents = function(){
   wdMinFilter = safe($("rewardFilter")?.value || 0);
 
   if (address) {
-    // âœ… reset then load current address only
+    //  reset then load current address only
     resetPerAddressStateUI();
 
     loadStakeSeriesLocal(); drawStakeChart();
@@ -4199,7 +4346,7 @@ renderEvents = function(){
 safeAsync(() => cloudPull(), "cloudPull");
   }
 
-  if (liveIcon) liveIcon.textContent = liveMode ? "ðŸ“¡" : "âŸ³";
+  if (liveIcon) liveIcon.textContent = liveMode ? "&#128225;" : "&#10227;";
   if (modeHint) modeHint.textContent = `Mode: ${liveMode ? "LIVE" : "REFRESH"}`;
 
   modeLoading = true;
@@ -4214,7 +4361,7 @@ safeAsync(() => cloudPull(), "cloudPull");
   try{ await loadCandleSnapshot(liveMode ? false : true); }catch(e){ console.warn("boot loadCandleSnapshot", e); }
 
 
-  // âœ… Auto-load last used address (persisted) + auto-start data load
+  //  Auto-load last used address (persisted) + auto-start data load
   const savedAddr = (localStorage.getItem("inj_address") || "").trim();
   const hasSavedAddr = !!savedAddr && /^inj[a-z0-9]{20,80}$/i.test(savedAddr);
 
@@ -4334,12 +4481,12 @@ function animate() {
   const oa = displayed.available;
   displayed.available = tick(displayed.available, availableInj);
   colorNumber($("available"), displayed.available, oa, 6);
-  setText("availableUsd", `â‰ˆ $${(displayed.available * displayed.price).toFixed(2)}`);
+  setText("availableUsd", `~ $${(displayed.available * displayed.price).toFixed(2)}`);
 
   const os = displayed.stake;
   displayed.stake = tick(displayed.stake, stakeInj);
   colorNumber($("stake"), displayed.stake, os, 4);
-  setText("stakeUsd", `â‰ˆ $${(displayed.stake * displayed.price).toFixed(2)}`);
+  setText("stakeUsd", `~ $${(displayed.stake * displayed.price).toFixed(2)}`);
 
   const stakePct = clamp((displayed.stake / Math.max(0.0001, stakeTargetMaxDyn)) * 100, 0, 100);
   const stakeBar = $("stakeBar");
@@ -4353,7 +4500,7 @@ function animate() {
   const or = displayed.rewards;
   displayed.rewards = tick(displayed.rewards, rewardsInj);
   colorNumber($("rewards"), displayed.rewards, or, 7);
-  setText("rewardsUsd", `â‰ˆ $${(displayed.rewards * displayed.price).toFixed(2)}`);
+  setText("rewardsUsd", `~ $${(displayed.rewards * displayed.price).toFixed(2)}`);
 
   const autoMaxR = Math.max(0.1, Math.ceil(displayed.rewards * 10) / 10);
   const maxR = Math.max(autoMaxR, safe(rewardTargetMaxDyn) || 1);
