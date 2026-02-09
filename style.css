@@ -1,4 +1,4 @@
-/* style.css â€” Injective Portfolio v2.0.2 (FULL FILE) */
+/* style.css -- Injective Portfolio v2.0.2 (FULL FILE) */
 
 :root{
   --bg-dark:#000;
@@ -401,7 +401,7 @@ body[data-theme="light"] .card-expand{ border-color: rgba(15,23,42,.10); backgro
   overflow: hidden;
 }
 
-/* ===== Bars (piÃ¹ grandi, % al centro) ===== */
+/* ===== Bars (pi grandi, % al centro) ===== */
 .bar-container{
   margin-top: 12px;
   height: 18px;
@@ -917,8 +917,8 @@ body[data-theme="light"] .acc-head{
 
 
 /* =========================================================
-   v2.0.2 â€¢ Integrations (privacy + events pro + targets + APR + validator + price TF)
-   (appended â€“ no reordering)
+   v2.0.2 | Integrations (privacy + events pro + targets + APR + validator + price TF)
+   (appended - no reordering)
    ========================================================= */
 
 /* --- Privacy mode (targeted: blur only per-address fields) --- */
@@ -1140,7 +1140,7 @@ body[data-theme="light"] .ev-badge{ border-color: rgba(15,23,42,.12); background
 
 
 /* =========================================================
-   v2.0.2 â€¢ Final patches (click-only readouts + spacing + bar labels + price scale)
+   v2.0.2 | Final patches (click-only readouts + spacing + bar labels + price scale)
    ========================================================= */
 
 /* Chart readouts: show only during interaction */
@@ -1322,7 +1322,7 @@ body[data-theme="light"] .mini-btn.primary{
 /* ===== View mode: PRO / LITE ===== */
 body[data-view="pro"]{}
 
-/* LITE = solo numeri, layout piÃ¹ compatto */
+/* LITE = solo numeri, layout pi compatto */
 body[data-view="lite"] .cards-wrapper{ gap: .78rem; }
 body[data-view="lite"] .card{ padding: 12px; }
 body[data-view="lite"] .value-row{ font-size: 1.55rem; }
@@ -1684,39 +1684,32 @@ body[data-theme="light"] .bar-pct{ color: rgba(15,23,42,.92); text-shadow:none; 
   #priceChart{ height: 250px !important; }
 }
 
-/* ===== BACKUP SETTINGS ===== */
-.settings-input{
-  width: 240px;
-  max-width: 60vw;
-  background: rgba(255,255,255,.06);
-  border: 1px solid rgba(255,255,255,.12);
-  color: inherit;
-  border-radius: 12px;
-  padding: 8px 10px;
-  outline: none;
-}
-body[data-theme="light"] .settings-input{
-  background: rgba(15,23,42,.05);
-  border-color: rgba(15,23,42,.14);
-}
-.backup-api-row{
-  display:flex;
-  align-items:center;
-  justify-content:flex-end;
-  gap: 10px;
-  flex-wrap: wrap;
-}
+/* ===== BACKUP SETTINGS (ASCII-safe) ===== */
 #backupSettingsCard .settings-value{
   display:flex;
   justify-content:flex-end;
-  gap: 8px;
-  flex-wrap: wrap;
+  gap:8px;
+  flex-wrap:wrap;
   text-align:right;
 }
-#backupNote{
-  margin-top: 10px;
-  font-size: .9rem;
-  opacity: .82;
-  line-height: 1.35;
-  word-break: break-word;
+#backupSettingsCard .backup-api-row{
+  gap:10px;
+}
+#backupSettingsCard .settings-input{
+  min-width: 220px;
+}
+
+/* ===== Total Rewards Accumulate animation ===== */
+.num-burst-green{
+  color: var(--green);
+  text-shadow: 0 0 14px rgba(34,197,94,.22);
+  transition: color .25s ease, text-shadow .25s ease;
+}
+@keyframes rewardPulseGreen{
+  0%{ transform: translateY(0); filter: brightness(1); }
+  40%{ transform: translateY(-1px); filter: brightness(1.25); }
+  100%{ transform: translateY(0); filter: brightness(1); }
+}
+.num-burst-green.pulsing{
+  animation: rewardPulseGreen .65s ease both;
 }
