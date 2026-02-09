@@ -1,6 +1,6 @@
 /* =========================================================
-   Injective Portfolio • v2.0.2
-   app.js — FULL FILE (Definitivo + Advanced settings + crosshair + per-address isolation)
+   Injective Portfolio â€¢ v2.0.2
+   app.js â€” FULL FILE (Definitivo + Advanced settings + crosshair + per-address isolation)
    ========================================================= */
 
 /* ================= CONFIG ================= */
@@ -43,7 +43,7 @@ const DAY_MINUTES = 24 * 60;
 const ONE_MIN_MS = 60_000;
 
 /* Price Chart live window */
-const PRICE_LIVE_WINDOW_MS = 15 * 60 * 1000; // ✅ 15 minutes
+const PRICE_LIVE_WINDOW_MS = 15 * 60 * 1000; // âœ… 15 minutes
 const PRICE_LIVE_MAX_POINTS = 15;
 
 /* Tx fee estimate (Injective min gas price 160,000,000inj; 1 INJ = 1e18 inj) */
@@ -61,42 +61,17 @@ const NW_LOCAL_VER = 2;
 const EV_LOCAL_VER = 1;
 
 /* net worth limits */
-const NW_MAX_POINTS = 24000;
+const NW_MAX_POINTS = 4800;
 
 /* Net Worth live window */
-const NW_LIVE_WINDOW_MS = 15 * 60 * 1000; // ✅ 15 minutes live window
-
-/* api base (allow running from github pages too) */
-const VERCEL_ORIGIN_FALLBACK = "https://injtracke-rv2-0-2-official.vercel.app";
-const API_BASE = (() => {
-  try {
-    const h = location.hostname || "";
-    const override = (localStorage.getItem("inj_api_base") || "").trim();
-    if (override) return override.replace(/\/$/, "");
-    if (h.endsWith(".vercel.app") || h === "localhost" || h === "127.0.0.1") return location.origin;
-    return VERCEL_ORIGIN_FALLBACK;
-  } catch {
-    return VERCEL_ORIGIN_FALLBACK;
-  }
-})();
+const NW_LIVE_WINDOW_MS = 15 * 60 * 1000; // âœ… 15 minutes live window
 
 /* cloud */
-const CLOUD_API = `${API_BASE}/api/point`;
+const CLOUD_API = "/api/point";
 const CLOUD_PUSH_DEBOUNCE_MS = 1200;
 const CLOUD_PULL_INTERVAL_MS = 45_000;
 const CLOUD_FAIL_COOLDOWN_MS = 120_000;
 let cloudLastFailAt = 0;
-
-/* backup (per-address snapshots) */
-const BACKUP_VER = 1;
-const BACKUP_API = `${API_BASE}/api/backup`;
-const BACKUP_LOCAL_KEY_PREFIX = `inj_backup_v${BACKUP_VER}_`;
-const BACKUP_META_KEY_PREFIX  = `inj_backupmeta_v${BACKUP_VER}_`;
-const BACKUP_PUSH_DEBOUNCE_MS = 2200;
-const BACKUP_FAIL_COOLDOWN_MS = 120_000;
-let backupLastFailAt = 0;
-
-
 
 /* refresh mode staging */
 const REFRESH_RED_MS = 220;
@@ -124,7 +99,7 @@ function labelToTs(lbl) {
 }
 
 function nowLabel() { return new Date().toLocaleTimeString(); }
-function shortAddr(a) { return a && a.length > 18 ? (a.slice(0, 10) + "…" + a.slice(-6)) : (a || ""); }
+function shortAddr(a) { return a && a.length > 18 ? (a.slice(0, 10) + "â€¦" + a.slice(-6)) : (a || ""); }
 function setText(id, txt) { const el = $(id); if (el) el.textContent = txt; }
 
 function fmtSmart(v){
@@ -284,7 +259,7 @@ function applyTheme(t){
   document.body.dataset.theme = theme;
   localStorage.setItem(THEME_KEY, theme);
   const themeIcon = $("themeIcon");
-  if (themeIcon) themeIcon.textContent = theme === "dark" ? "🌙" : "☀️";
+  if (themeIcon) themeIcon.textContent = theme === "dark" ? "ðŸŒ™" : "â˜€ï¸";
   refreshChartsTheme();
   renderSettingsSnapshot(); // keep settings updated
 }
@@ -296,7 +271,7 @@ function applyView(v){
 
   const icon = $("viewIcon");
   const btn  = $("viewToggle");
-  if (icon) icon.textContent = (viewMode === "lite") ? "⚡" : "🧠";
+  if (icon) icon.textContent = (viewMode === "lite") ? "âš¡" : "ðŸ§ ";
   if (btn) btn.setAttribute("aria-label", `View mode: ${viewMode.toUpperCase()}`);
 }
 
@@ -359,7 +334,7 @@ function refreshConnUI() {
 
   if (!hasInternet()) {
     const last = fmtLastOk();
-    setState("offline", last ? `Offline • Last: ${last}` : "Offline");
+    setState("offline", last ? `Offline â€¢ Last: ${last}` : "Offline");
     return;
   }
 
@@ -447,9 +422,9 @@ function updatePerf(arrowId, pctId, v) {
   const arrow = $(arrowId), pct = $(pctId);
   if (!arrow || !pct) return;
 
-  if (v > 0) { arrow.textContent = "▲"; arrow.className = "arrow up"; pct.className = "pct up"; }
-  else if (v < 0) { arrow.textContent = "▼"; arrow.className = "arrow down"; pct.className = "pct down"; }
-  else { arrow.textContent = "►"; arrow.className = "arrow flat"; pct.className = "pct flat"; }
+  if (v > 0) { arrow.textContent = "â–²"; arrow.className = "arrow up"; pct.className = "pct up"; }
+  else if (v < 0) { arrow.textContent = "â–¼"; arrow.className = "arrow down"; pct.className = "pct down"; }
+  else { arrow.textContent = "â–º"; arrow.className = "arrow flat"; pct.className = "pct flat"; }
 
   pct.textContent = Math.abs(v).toFixed(2) + "%";
 }
@@ -518,7 +493,7 @@ function maskAddr(a){
   const s = String(a||"").trim();
   if (!s) return "";
   if (s.length <= 14) return s;
-  return s.slice(0, 8) + "…" + s.slice(-6);
+  return s.slice(0, 8) + "â€¦" + s.slice(-6);
 }
 function setCopyButtonState(ok){
   const btn = $("copyAddrBtn");
@@ -576,7 +551,7 @@ addressInput?.addEventListener("keydown", async (e) => {
     await commitAddress(v);
     addressInput.value = "";
     pendingAddress = "";
-    closeSearch(); /* ✅ torna normale dopo ricerca */
+    closeSearch(); /* âœ… torna normale dopo ricerca */
   } else if (e.key === "Escape") {
     e.preventDefault();
     addressInput.value = "";
@@ -686,7 +661,7 @@ function pageLabel(key){
 }
 function openComingSoon(pageKey){
   if (!comingSoon) return;
-  if (comingTitle) comingTitle.textContent = `COMING SOON 🚀`;
+  if (comingTitle) comingTitle.textContent = `COMING SOON ðŸš€`;
   if (comingSub) comingSub.textContent = `${pageLabel(pageKey)} is coming soon.`;
   comingSoon.classList.add("show");
   comingSoon.setAttribute("aria-hidden", "false");
@@ -853,7 +828,7 @@ function renderCardOrderUI(){
     up.dataset.act = "up";
     up.dataset.id = id;
     up.setAttribute("aria-label", "Move up");
-    up.textContent = "▲";
+    up.textContent = "â–²";
     up.disabled = (i === 0);
 
     const down = document.createElement("button");
@@ -862,7 +837,7 @@ function renderCardOrderUI(){
     down.dataset.act = "down";
     down.dataset.id = id;
     down.setAttribute("aria-label", "Move down");
-    down.textContent = "▼";
+    down.textContent = "â–¼";
     down.disabled = (i === cardOrderDraft.length - 1);
 
     actions.appendChild(up);
@@ -902,7 +877,7 @@ function renderCardOrderUI(){
       const ids = normalizeCardOrder(cardOrderDraft);
       saveCardOrder(ids);
       applyCardOrder(ids);
-      if (note) note.textContent = "Applied ✓";
+      if (note) note.textContent = "Applied âœ“";
     }, { passive:false });
 
     $("cardOrderReset")?.addEventListener("click", (e) => {
@@ -912,7 +887,7 @@ function renderCardOrderUI(){
       saveCardOrder(ids);
       applyCardOrder(ids);
       renderCardOrderUI();
-      if (note) note.textContent = "Reset ✓";
+      if (note) note.textContent = "Reset âœ“";
     }, { passive:false });
   }
 }
@@ -1039,6 +1014,7 @@ function saveEvents(){
     localStorage.setItem(key, JSON.stringify({ v: EV_LOCAL_VER, t: Date.now(), events: eventsAll.slice(0, 1200) }));
   } catch {}
   cloudBumpLocal(1);
+    backupTouchLocal();
   cloudMarkDirty({ events:true });
 }
 function showToast(ev){
@@ -1227,7 +1203,7 @@ function setMode(isLive){
   liveMode = !!isLive;
   localStorage.setItem(MODE_KEY, liveMode ? "live" : "refresh");
 
-  if (liveIcon) liveIcon.textContent = liveMode ? "📡" : "⟳";
+  if (liveIcon) liveIcon.textContent = liveMode ? "ðŸ“¡" : "âŸ³";
   if (modeHint) modeHint.textContent = `Mode: ${liveMode ? "LIVE" : "REFRESH"}`;
 
   modeLoading = true;
@@ -1441,7 +1417,7 @@ async function loadAccount(isRefresh=false) {
     const del = (s.delegation_responses || []);
     stakeInj = del.reduce((a, d) => a + safe(d?.balance?.amount), 0) / 1e18;
 
-    // ✅ Validator card (top delegation)
+    // âœ… Validator card (top delegation)
     try { updateValidatorFromDelegations(del); } catch {}
 
     // Rewards may fail sometimes; keep last known if so
@@ -1455,7 +1431,7 @@ async function loadAccount(isRefresh=false) {
       apr = safe(i.inflation) * 100;
     }
 
-    // ✅ APR change event
+    // âœ… APR change event
     if (lastAprSeen == null) lastAprSeen = apr;
     else {
       const dApr = apr - lastAprSeen;
@@ -1463,7 +1439,7 @@ async function loadAccount(isRefresh=false) {
         pushEvent({
           kind: "apr",
           title: dApr > 0 ? "APR increased" : "APR decreased",
-          detail: `${(dApr>0?"+":"")}${dApr.toFixed(2)}% • Now ${apr.toFixed(2)}%`,
+          detail: `${(dApr>0?"+":"")}${dApr.toFixed(2)}% â€¢ Now ${apr.toFixed(2)}%`,
           dir: dApr > 0 ? "up" : "down",
           status: "done"
         });
@@ -1499,7 +1475,7 @@ async function loadCandleSnapshot(isRefresh=false) {
     fetchJSON("https://api.binance.com/api/v3/klines?symbol=INJUSDT&interval=1M&limit=1"),
     fetchJSON("https://api.binance.com/api/v3/klines?symbol=INJUSDT&interval=1w&limit=52")
   ]);
-  // ✅ network ok
+  // âœ… network ok
   markLastOk();
 
   if (Array.isArray(d) && d[0]) {
@@ -1639,7 +1615,7 @@ function updatePinnedOverlay() {
   const ts = labelToTs(label);
   const span = spanMsFromLabels(lbs);
   const lbl = ts ? fmtAxisX(ts, span) : String(label);
-  chartEl.textContent = `${lbl} • $${price.toFixed(4)}`;
+  chartEl.textContent = `${lbl} â€¢ $${price.toFixed(4)}`;
   overlay.classList.add("show");
 }
 
@@ -1915,6 +1891,7 @@ function saveStakeSeriesLocal() {
       labels: stakeLabels, data: stakeData, moves: stakeMoves, types: stakeTypes
     }));
     cloudBumpLocal(1);
+    backupTouchLocal();
   } catch {}
   cloudMarkDirty({ stake:true });
 }
@@ -1986,7 +1963,7 @@ function initStakeChart() {
   attachCrosshair2(stakeChart, $("stakeReadout"), (i, lbs, ds) => {
     const t = labelToTs(lbs?.[i]);
     const v = safe(ds?.[i]);
-    return `${t ? new Date(t).toLocaleString() : "—"} • ${v.toFixed(4)} INJ`;
+    return `${t ? new Date(t).toLocaleString() : "â€”"} â€¢ ${v.toFixed(4)} INJ`;
   });
 }
 function drawStakeChart() {
@@ -2074,6 +2051,7 @@ function saveWdAllLocal() {
       labels: wdLabelsAll, values: wdValuesAll, times: wdTimesAll
     }));
     cloudBumpLocal(1);
+    backupTouchLocal();
   } catch {}
   cloudMarkDirty({ wd:true });
 }
@@ -2158,7 +2136,7 @@ function initRewardWdChart() {
   attachCrosshair2(rewardChart, $("rewardReadout"), (i, lbs, ds) => {
     const t = labelToTs(lbs?.[i]) || (wdTimes?.[i] || 0);
     const v = safe(ds?.[i]);
-    return `${t ? new Date(t).toLocaleString() : "—"} • +${v.toFixed(6)} INJ`;
+    return `${t ? new Date(t).toLocaleString() : "â€”"} â€¢ +${v.toFixed(6)} INJ`;
   });
 }
 function drawRewardWdChart() {
@@ -2190,7 +2168,7 @@ function syncRewardTimelineUI(forceToEnd=false) {
   const n = wdValues.length;
   if (!n) {
     slider.min = 0; slider.max = 0; slider.value = 0;
-    meta.textContent = "—";
+    meta.textContent = "â€”";
     if (rewardChart) {
       rewardChart.options.scales.x.min = undefined;
       rewardChart.options.scales.x.max = undefined;
@@ -2218,7 +2196,7 @@ function syncRewardTimelineUI(forceToEnd=false) {
   const toTs   = wdTimes[maxIdx] || labelToTs(wdLabels[maxIdx]);
   const from = fromTs ? fmtHHMM(fromTs) : (wdLabels[minIdx] || "");
   const to   = toTs ? fmtHHMM(toTs) : (wdLabels[maxIdx] || "");
-  meta.textContent = n <= 1 ? `${to}` : `${from} → ${to}`;
+  meta.textContent = n <= 1 ? `${to}` : `${from} â†’ ${to}`;
 }
 
 $("rewardTimeline")?.addEventListener("input", () => syncRewardTimelineUI(false), { passive: true });
@@ -2302,7 +2280,7 @@ function updateTotalRewardAccUI(){
     : 0;
 
   if (usd){
-    usd.textContent = px ? `≈ $${(total * px).toFixed(4)}` : "≈ $—";
+    usd.textContent = px ? `â‰ˆ $${(total * px).toFixed(4)}` : "â‰ˆ $â€”";
   }
 }
 
@@ -2313,6 +2291,8 @@ function updateTotalRewardAccUI(){
 let nwTf = "live";
 let nwScale = "linear";
 let nwTAll = [];
+let nwSessionStartAt = Date.now(); // anchor for LIVE (session)
+
 let nwUsdAll = [];
 let nwInjAll = [];
 
@@ -2320,8 +2300,6 @@ let netWorthChart = null;
 let lastNWDrawAt = 0;
 let lastNWPointAt = 0;
 
-
-let nwSessionStartAt = Date.now(); // anchor for LIVE 15m window
 function nwStoreKey(addr){
   const a = (addr || "").trim();
   return a ? `inj_networth_v${NW_LOCAL_VER}_${a}` : null;
@@ -2350,6 +2328,7 @@ function saveNWLocal(){
       scale: nwScale
     }));
     cloudBumpLocal(1);
+    backupTouchLocal();
   } catch {}
   cloudMarkDirty({ nw:true });
 }
@@ -2373,7 +2352,6 @@ function loadNWLocal(){
   } catch { return false; }
 }
 
-
 function startOfDay(ts){
   const d = new Date(ts);
   d.setHours(0,0,0,0);
@@ -2381,7 +2359,7 @@ function startOfDay(ts){
 }
 function startOfWeek(ts){
   const d = new Date(ts);
-  const day = (d.getDay() + 6) % 7; // lunedì
+  const day = (d.getDay() + 6) % 7; // Monday=0
   d.setHours(0,0,0,0);
   d.setDate(d.getDate() - day);
   return d.getTime();
@@ -2402,8 +2380,10 @@ function startOfYear(ts){
 function nwRangeForTf(tf){
   const now = Date.now();
   if (tf === "live"){
-    // primi 15m: da session start, poi rolling 15m
-    const start = Math.max(Number(nwSessionStartAt || now), now - NW_LIVE_WINDOW_MS);
+    // first 15m from session start, then rolling window
+    const start = (now - nwSessionStartAt < NW_LIVE_WINDOW_MS)
+      ? (nwSessionStartAt || now)
+      : (now - NW_LIVE_WINDOW_MS);
     return { start, end: now };
   }
   if (tf === "1d") return { start: startOfDay(now), end: now };
@@ -2419,10 +2399,9 @@ function nwHasSpan(tf){
   if (!nwTAll.length) return false;
   const r = nwRangeForTf(tf);
   let first = 0, last = 0;
-
   for (let i=0;i<nwTAll.length;i++){
     const t = Number(nwTAll[i]);
-    if (t >= r.start && t <= r.end){ first = t; break; }
+    if (t >= r.start){ first = t; break; }
   }
   for (let i=nwTAll.length-1;i>=0;i--){
     const t = Number(nwTAll[i]);
@@ -2433,54 +2412,18 @@ function nwHasSpan(tf){
 
 function nwBuildView(tf){
   const r = nwRangeForTf(tf);
-
   const labels = [];
   const data = [];
-
-  for (let i = 0; i < nwTAll.length; i++){
-    const t = safe(nwTAll[i]);
-    const u = safe(nwUsdAll[i]);
-    if (t >= r.start && t <= r.end && Number.isFinite(u) && u > 0) {
+  for (let i=0;i<nwTAll.length;i++){
+    const t = Number(nwTAll[i]);
+    const u = Number(nwUsdAll[i]);
+    if (t >= r.start && t <= r.end && Number.isFinite(u) && u > 0){
       labels.push(tsLabel(t));
       data.push(u);
     }
   }
   return { labels, data };
 }
-
-const nwLastDotPlugin = {
-  id: "nwLastDotPlugin",
-  afterDatasetsDraw(ch) {
-    const meta = ch.getDatasetMeta(0);
-    const pts = meta?.data || [];
-    if (!pts.length) return;
-
-    const el = pts[pts.length - 1];
-    if (!el) return;
-
-    const t = Date.now();
-    const pulse = 0.35 + 0.65 * Math.abs(Math.sin(t / 320));
-
-    const ctx = ch.ctx;
-    ctx.save();
-    ctx.shadowColor = `rgba(250,204,21,${0.35 * pulse})`;
-    ctx.shadowBlur = 10;
-
-    ctx.beginPath();
-    ctx.arc(el.x, el.y, 6.5, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(250,204,21,${0.22 * pulse})`;
-    ctx.fill();
-
-    ctx.shadowBlur = 0;
-    ctx.beginPath();
-    ctx.arc(el.x, el.y, 3.2, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(250,204,21,${0.95 * pulse})`;
-    ctx.fill();
-
-    ctx.restore();
-  }
-};
-
 function initNWChart(){
   const canvas = $("netWorthChart");
   if (!canvas || !window.Chart) return;
@@ -2554,7 +2497,7 @@ function initNWChart(){
   attachCrosshair2(netWorthChart, $("nwReadout"), (i, lbs, ds) => {
     const t = labelToTs(lbs?.[i]);
     const v = safe(ds?.[i]);
-    return `${t ? fmtHHMM(t) : "—"} • $${v.toFixed(2)}`;
+    return `${t ? fmtHHMM(t) : "â€”"} â€¢ $${v.toFixed(2)}`;
   });
 }
 
@@ -2611,7 +2554,7 @@ function drawNW(force=false){
     if (pnlEl){
       pnlEl.classList.remove("good","bad");
       pnlEl.classList.add("flat");
-      pnlEl.textContent = "PnL: —";
+      pnlEl.textContent = "PnL: â€”";
     }
   }
 
@@ -2622,7 +2565,7 @@ function drawNW(force=false){
     const lbs = netWorthChart.data.labels || [];
     if (ds.length) {
       const i = ds.length - 1;
-      $("nwReadout").textContent = `${labelToTs(lbs[i]) ? fmtHHMM(labelToTs(lbs[i])) : "—"} • $${safe(ds[i]).toFixed(2)}`;
+      $("nwReadout").textContent = `${labelToTs(lbs[i]) ? fmtHHMM(labelToTs(lbs[i])) : "â€”"} â€¢ $${safe(ds[i]).toFixed(2)}`;
     }
   }
 }
@@ -2694,10 +2637,154 @@ function recordNetWorthPoint(){
 }
 
 /* ================= CLOUD SYNC ================= */
-let remoteApplying = false; // prevent feedback loops while restoring snapshots
-
 const CLOUD_VER = 2;
 const CLOUD_KEY = `inj_cloudmeta_v${CLOUD_VER}`;
+/* ================= BACKUP (per-wallet) ================= */
+const BACKUP_VER = 1;
+const BACKUP_LOCAL_PREFIX = `inj_backup_v${BACKUP_VER}_`;
+const BACKUP_META_PREFIX  = `inj_backupmeta_v${BACKUP_VER}_`;
+const API_BASE_KEY = "inj_api_base"; // set if hosting UI outside Vercel (e.g. github pages)
+
+function normBase(u){
+  return String(u||"").trim().replace(/\/+$/, "");
+}
+function getApiBase(){
+  try{ return normBase(localStorage.getItem(API_BASE_KEY) || ""); }catch{ return ""; }
+}
+function setApiBase(u){
+  const v = normBase(u);
+  try{
+    if (v) localStorage.setItem(API_BASE_KEY, v);
+    else localStorage.removeItem(API_BASE_KEY);
+  }catch{}
+  return v;
+}
+function apiUrl(path){
+  const base = getApiBase();
+  return base ? (base + path) : path;
+}
+
+let backupMeta = { localAt: 0, cloudAt: 0, cloudState: "â€”", cloudErr: "" };
+
+function backupMetaKey(addr){
+  const a = String(addr||"").trim();
+  return a ? (BACKUP_META_PREFIX + a) : null;
+}
+function backupLocalKey(addr){
+  const a = String(addr||"").trim();
+  return a ? (BACKUP_LOCAL_PREFIX + a) : null;
+}
+function backupLoadMeta(){
+  const k = backupMetaKey(address);
+  if (!k) { backupMeta = { localAt: 0, cloudAt: 0, cloudState:"â€”", cloudErr:"" }; return; }
+  try{
+    const raw = localStorage.getItem(k);
+    if (!raw) { backupMeta = { localAt: 0, cloudAt: 0, cloudState:"â€”", cloudErr:"" }; return; }
+    const o = JSON.parse(raw);
+    backupMeta = {
+      localAt: Number(o?.localAt || 0),
+      cloudAt: Number(o?.cloudAt || 0),
+      cloudState: String(o?.cloudState || "â€”"),
+      cloudErr: String(o?.cloudErr || "")
+    };
+  }catch{
+    backupMeta = { localAt: 0, cloudAt: 0, cloudState:"â€”", cloudErr:"" };
+  }
+}
+function backupSaveMeta(){
+  const k = backupMetaKey(address);
+  if (!k) return;
+  try{ localStorage.setItem(k, JSON.stringify(backupMeta)); }catch{}
+}
+function fmtTs(ts){
+  const t = Number(ts||0);
+  if (!t) return "â€”";
+  try{
+    const d = new Date(t);
+    return d.toLocaleString(undefined, { year:"numeric", month:"2-digit", day:"2-digit", hour:"2-digit", minute:"2-digit", second:"2-digit" });
+  }catch{ return String(t); }
+}
+function backupRenderUI(){
+  setText("backupLocalLast", fmtTs(backupMeta.localAt));
+  setText("backupCloudLast", fmtTs(backupMeta.cloudAt));
+  setText("backupCloudState", backupMeta.cloudState || "â€”");
+
+  const note = backupMeta.cloudErr ? `Last cloud error: ${backupMeta.cloudErr}` : (getApiBase() ? `Using Cloud API base: ${getApiBase()}` : "â€”");
+  setText("backupNote", note);
+
+  const inp = $("apiBaseInput");
+  if (inp && document.activeElement !== inp) inp.value = getApiBase();
+}
+function backupTouchLocal(){
+  if (!address) return;
+  backupMeta.localAt = Date.now();
+  backupSaveMeta();
+}
+function backupSaveLocalSnapshot(){
+  if (!address) return;
+  const k = backupLocalKey(address);
+  if (!k) return;
+  const payload = buildCloudPayload();
+  const snap = { v: BACKUP_VER, address, t: Date.now(), payload };
+  try{ localStorage.setItem(k, JSON.stringify(snap)); }catch{}
+  backupTouchLocal();
+}
+async function backupPushNow(){
+  if (!address) return;
+  if (!hasInternet()) {
+    backupMeta.cloudState = "OFFLINE";
+    backupMeta.cloudErr = "offline";
+    backupSaveMeta();
+    backupRenderUI();
+    return;
+  }
+
+  backupMeta.cloudState = "SAVING";
+  backupMeta.cloudErr = "";
+  backupSaveMeta();
+  backupRenderUI();
+
+  const url = `${apiUrl(CLOUD_API)}?address=${encodeURIComponent(address)}`;
+  const payload = buildCloudPayload();
+
+  try{
+    const res = await fetch(url, {
+      method: "POST",
+      cache: "no-store",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    const txt = await res.text();
+    let data = null;
+    try{ data = txt ? JSON.parse(txt) : null; }catch{ data = null; }
+
+    if (!res.ok || !data?.ok){
+      const msg = data?.error ? String(data.error) : (txt ? txt.slice(0,160) : `HTTP ${res.status}`);
+      backupMeta.cloudState = "ERROR";
+      backupMeta.cloudErr = `HTTP ${res.status} â€¢ ${msg}`;
+      backupSaveMeta();
+      backupRenderUI();
+      pushEvent({ kind:"info", title:"Cloud backup error", detail: backupMeta.cloudErr, status:"fail" });
+      return;
+    }
+
+    backupMeta.cloudState = "SYNCED";
+    backupMeta.cloudAt = Number(data?.t || Date.now());
+    backupMeta.cloudErr = "";
+    backupSaveMeta();
+    backupRenderUI();
+    pushEvent({ kind:"info", title:"Backup synced", detail:"Cloud snapshot saved", status:"ok" });
+
+  }catch(e){
+    backupMeta.cloudState = "ERROR";
+    backupMeta.cloudErr = String(e?.message || e);
+    backupSaveMeta();
+    backupRenderUI();
+    pushEvent({ kind:"info", title:"Cloud backup error", detail: backupMeta.cloudErr, status:"fail" });
+  }
+}
+
 let cloudPts = 0;
 let cloudLastSync = 0;
 let cloudDirty = false;
@@ -2739,7 +2826,7 @@ function cloudSetState(state){
       : hasInternet() ? "Synced" : "Offline cache";
   }
   if (cloudLastMenu){
-    cloudLastMenu.textContent = cloudLastSync ? new Date(cloudLastSync).toLocaleString() : "—";
+    cloudLastMenu.textContent = cloudLastSync ? new Date(cloudLastSync).toLocaleString() : "â€”";
   }
 
   // Advanced settings monitor
@@ -2757,11 +2844,11 @@ function cloudSetState(state){
   }
   if (advSt) {
     advSt.textContent =
-      (state === "saving") ? (hasInternet() ? "Saving to Cloud…" : "Offline cache") :
+      (state === "saving") ? (hasInternet() ? "Saving to Cloudâ€¦" : "Offline cache") :
       (state === "error") ? "Cloud error" :
       (hasInternet() ? "Cloud synced" : "Offline cache");
   }
-  if (advLast) advLast.textContent = cloudLastSync ? new Date(cloudLastSync).toLocaleString() : "—";
+  if (advLast) advLast.textContent = cloudLastSync ? new Date(cloudLastSync).toLocaleString() : "â€”";
   if (advPts) advPts.textContent = String(Math.max(0, Math.floor(safe(cloudPts))));
   if (advWhat){
     const list = [];
@@ -2769,14 +2856,14 @@ function cloudSetState(state){
     if (cloudDirtyWhat.wd) list.push("Rewards");
     if (cloudDirtyWhat.nw) list.push("NetWorth");
     if (cloudDirtyWhat.events) list.push("Events");
-    advWhat.textContent = list.length ? list.join(", ") : (state === "saving" ? "Preparing…" : "—");
+    advWhat.textContent = list.length ? list.join(", ") : (state === "saving" ? "Preparingâ€¦" : "â€”");
   }
 }
 function cloudRenderMeta(){
   const hist = $("cloudHistory");
-  if (hist) hist.textContent = `· ${Math.max(0, Math.floor(cloudPts))} pts`;
+  if (hist) hist.textContent = `Â· ${Math.max(0, Math.floor(cloudPts))} pts`;
   if (cloudLastMenu){
-    cloudLastMenu.textContent = cloudLastSync ? new Date(cloudLastSync).toLocaleString() : "—";
+    cloudLastMenu.textContent = cloudLastSync ? new Date(cloudLastSync).toLocaleString() : "â€”";
   }
   cloudSetState("synced");
 }
@@ -2786,14 +2873,8 @@ function cloudBumpLocal(points = 1){
   cloudSaveMeta();
   cloudRenderMeta();
 }
-
 function cloudMarkDirty(what = {}){
   if (!address) return;
-  if (remoteApplying) return;
-
-  // backup snapshot (local + cloud) is independent from points sync
-  try{ backupMarkDirty(what); } catch {}
-
   cloudDirty = true;
   if (what?.stake) cloudDirtyWhat.stake = true;
   if (what?.wd) cloudDirtyWhat.wd = true;
@@ -2803,7 +2884,6 @@ function cloudMarkDirty(what = {}){
   if (!hasInternet()) return;
   scheduleCloudPush();
 }
-
 function scheduleCloudPush(){
   if (Date.now() - cloudLastFailAt < CLOUD_FAIL_COOLDOWN_MS) return;
   if (cloudPushTimer) clearTimeout(cloudPushTimer);
@@ -2916,7 +2996,7 @@ async function cloudPull(){
   if (!address) return;
   if (!hasInternet()) { cloudSetState("synced"); return; }
 
-  const url = `${CLOUD_API}?address=${encodeURIComponent(address)}`;
+  const url = `${apiUrl(CLOUD_API)}?address=${encodeURIComponent(address)}`;
   const res = await fetchJSON(url);
   if (!res?.ok) { cloudLastFailAt = Date.now();
     cloudSetState("error"); return; }
@@ -2925,7 +3005,7 @@ async function cloudPull(){
   try{
     const data = res.data;
 
-    // ✅ merge solo del tuo address, payload è per-address già dal server
+    // âœ… merge solo del tuo address, payload Ã¨ per-address giÃ  dal server
     mergeStakeByLabel(data.stake);
     mergeWd(data.wd);
     mergeNW(data.nw);
@@ -2959,7 +3039,7 @@ async function cloudPush(){
 
   cloudSetState("saving");
 
-  const url = `${CLOUD_API}?address=${encodeURIComponent(address)}`;
+  const url = `${apiUrl(CLOUD_API)}?address=${encodeURIComponent(address)}`;
   const payload = buildCloudPayload();
 
   const res = await fetchJSON(url, {
@@ -2981,271 +3061,6 @@ async function cloudPush(){
   cloudSaveMeta();
   cloudRenderMeta();
   cloudSetState("synced");
-}
-
-
-/* ================= BACKUP (per-address snapshot) ================= */
-function backupLocalKey(addr){
-  const a = (addr || "").trim();
-  return a ? (BACKUP_LOCAL_KEY_PREFIX + a) : null;
-}
-function backupMetaKey(addr){
-  const a = (addr || "").trim();
-  return a ? (BACKUP_META_KEY_PREFIX + a) : null;
-}
-function parseJSONSafe(raw){
-  try{ return raw ? JSON.parse(raw) : null; } catch { return null; }
-}
-function fmtWhen(ts){
-  ts = Number(ts || 0);
-  if (!ts) return "—";
-  try{ return new Date(ts).toLocaleString(); } catch { return "—"; }
-}
-function backupLoadMeta(addr){
-  const k = backupMetaKey(addr);
-  if (!k) return { v: BACKUP_VER, localLastAt:0, cloudLastAt:0, cloudState:"—", note:"" };
-  const obj = parseJSONSafe(localStorage.getItem(k));
-  if (!obj || typeof obj !== "object") return { v: BACKUP_VER, localLastAt:0, cloudLastAt:0, cloudState:"—", note:"" };
-  return {
-    v: BACKUP_VER,
-    localLastAt: Number(obj.localLastAt || 0),
-    cloudLastAt: Number(obj.cloudLastAt || 0),
-    cloudState: String(obj.cloudState || "—"),
-    note: String(obj.note || "")
-  };
-}
-function backupSaveMeta(addr, meta){
-  const k = backupMetaKey(addr);
-  if (!k) return;
-  try{ localStorage.setItem(k, JSON.stringify(meta || {})); } catch {}
-}
-function backupRenderUI(){
-  if (!address) {
-    setText("backupLocalLast", "—");
-    setText("backupCloudState", "—");
-    setText("backupCloudLast", "—");
-    setText("backupNote", "Insert a wallet to enable backups.");
-    return;
-  }
-  const meta = backupLoadMeta(address);
-  setText("backupLocalLast", fmtWhen(meta.localLastAt));
-  setText("backupCloudState", meta.cloudState || (hasInternet() ? "—" : "OFFLINE"));
-  setText("backupCloudLast", fmtWhen(meta.cloudLastAt));
-    const baseNote = meta.note || "Snapshot includes Stake / Rewards / Net Worth / APR / Events + targets.";
-  const errNote = meta.cloudLastErr ? ("Last cloud error: " + meta.cloudLastErr) : "";
-  setText("backupNote", errNote ? (baseNote + " • " + errNote) : baseNote);
-}
-
-function backupCollectStores(addr){
-  const a = (addr || "").trim();
-  if (!a) return null;
-
-  // Ensure latest memory is flushed to per-address locals (best effort)
-  try{ saveStakeSeriesLocal?.(); } catch {}
-  try{ saveWdAllLocal?.(); } catch {}
-  try{ saveNWLocal?.(); } catch {}
-  try{ saveEvents?.(); } catch {}
-  try{ saveAprLocal?.(); } catch {}
-  try{ saveAccountSnapshot?.(); } catch {}
-
-  const stakeRaw = localStorage.getItem(stakeStoreKey(a) || "") || "";
-  const wdRaw    = localStorage.getItem(wdStoreKey(a) || "") || "";
-  const nwRaw    = localStorage.getItem(nwStoreKey(a) || "") || "";
-  const evRaw    = localStorage.getItem(evStoreKey(a) || "") || "";
-  const aprRaw   = localStorage.getItem(aprStoreKey(a) || "") || "";
-  const snapRaw  = localStorage.getItem(SNAP_KEY_PREFIX + a) || "";
-
-  const tStake = localStorage.getItem(targetKey(a, "stake") || "");
-  const tRew   = localStorage.getItem(targetKey(a, "reward") || "");
-
-  return {
-    stake: parseJSONSafe(stakeRaw),
-    wd: parseJSONSafe(wdRaw),
-    nw: parseJSONSafe(nwRaw),
-    events: parseJSONSafe(evRaw),
-    apr: parseJSONSafe(aprRaw),
-    snap: parseJSONSafe(snapRaw),
-    targets: {
-      stake: Number(tStake || 0) || 0,
-      reward: Number(tRew || 0) || 0
-    }
-  };
-}
-
-function backupBuildSnapshot(addr){
-  const stores = backupCollectStores(addr);
-  if (!stores) return null;
-  return {
-    v: BACKUP_VER,
-    ts: Date.now(),
-    address: String(addr || "").trim(),
-    stores
-  };
-}
-
-function backupApplySnapshot(snap){
-  if (!snap || typeof snap !== "object") return false;
-  const a = String(snap.address || "").trim();
-  if (!a) return false;
-  const st = snap.stores || {};
-  remoteApplying = true;
-  try{
-    if (st.stake && stakeStoreKey(a)) localStorage.setItem(stakeStoreKey(a), JSON.stringify(st.stake));
-    if (st.wd && wdStoreKey(a)) localStorage.setItem(wdStoreKey(a), JSON.stringify(st.wd));
-    if (st.nw && nwStoreKey(a)) localStorage.setItem(nwStoreKey(a), JSON.stringify(st.nw));
-    if (st.events && evStoreKey(a)) localStorage.setItem(evStoreKey(a), JSON.stringify(st.events));
-    if (st.apr && aprStoreKey(a)) localStorage.setItem(aprStoreKey(a), JSON.stringify(st.apr));
-    if (st.snap) localStorage.setItem(SNAP_KEY_PREFIX + a, JSON.stringify(st.snap));
-
-    if (st.targets){
-      if (st.targets.stake) localStorage.setItem(targetKey(a,"stake"), String(st.targets.stake));
-      if (st.targets.reward) localStorage.setItem(targetKey(a,"reward"), String(st.targets.reward));
-    }
-  } catch (e){
-    console.warn("[backupApplySnapshot] failed", e);
-    return false;
-  } finally {
-    remoteApplying = false;
-  }
-  return true;
-}
-
-let backupDirty = false;
-let backupLocalTimer = null;
-let backupPushTimer = null;
-
-function backupSaveLocalNow(force=false){
-  if (!address) return false;
-  const snap = backupBuildSnapshot(address);
-  if (!snap) return false;
-
-  const key = backupLocalKey(address);
-  if (!key) return false;
-
-  try{
-    localStorage.setItem(key, JSON.stringify(snap));
-  } catch (e){
-    console.warn("[backupSaveLocalNow] localStorage write failed", e);
-    return false;
-  }
-
-  const meta = backupLoadMeta(address);
-  meta.localLastAt = snap.ts;
-  meta.note = meta.note || "Snapshot includes Stake / Rewards / Net Worth / APR / Events + targets.";
-  backupSaveMeta(address, meta);
-  backupRenderUI();
-  return true;
-}
-
-function backupMarkDirty(what = {}){
-  if (!address) return;
-  if (remoteApplying) return;
-
-  backupDirty = true;
-
-  // local snapshot: always (also offline)
-  if (backupLocalTimer) clearTimeout(backupLocalTimer);
-  backupLocalTimer = setTimeout(() => {
-    backupSaveLocalNow(false);
-  }, 900);
-
-  // cloud snapshot: debounce + cooldown
-  if (!hasInternet()) return;
-  if ((Date.now() - backupLastFailAt) < BACKUP_FAIL_COOLDOWN_MS) return;
-
-  if (backupPushTimer) clearTimeout(backupPushTimer);
-  backupPushTimer = setTimeout(() => {
-    safeAsync(() => backupPush(false), "backupPush");
-  }, BACKUP_PUSH_DEBOUNCE_MS);
-}
-
-async function backupPush(force=false){
-  if (!address) return false;
-  if (!hasInternet()) {
-    const meta = backupLoadMeta(address);
-    meta.cloudState = "OFFLINE";
-    backupSaveMeta(address, meta);
-    backupRenderUI();
-    return false;
-  }
-  if (!force && (Date.now() - backupLastFailAt) < BACKUP_FAIL_COOLDOWN_MS) return false;
-
-  const snap = backupBuildSnapshot(address);
-  if (!snap) return false;
-
-  const url = `${BACKUP_API}?address=${encodeURIComponent(address)}`;
-
-  try{
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type":"application/json" },
-      body: JSON.stringify(snap),
-      cache: "no-store"
-    });
-    const j = await res.json().catch(() => null);
-    if (!res.ok || !j?.ok) throw new Error(j?.error || ("HTTP " + res.status));
-
-    const meta = backupLoadMeta(address);
-    meta.cloudState = "SYNCED";
-    meta.cloudLastAt = Number(j?.meta?.uploadedAt || Date.now());
-    meta.cloudLastErr = "";
-    backupSaveMeta(address, meta);
-    backupRenderUI();
-    backupDirty = false;
-    return true;
-  } catch (e){
-    console.warn("[backupPush] failed", e);
-    backupLastFailAt = Date.now();
-    const meta = backupLoadMeta(address);
-    meta.cloudState = "ERROR";
-    meta.cloudLastErr = (e && e.message) ? e.message : String(e || "error");
-    backupSaveMeta(address, meta);
-    backupRenderUI();
-    return false;
-  }
-}
-
-async function backupPullLatest(addr){
-  const a = (addr || "").trim();
-  if (!a || !hasInternet()) return null;
-  const url = `${BACKUP_API}?address=${encodeURIComponent(a)}`;
-  try{
-    const j = await fetchJSON(url);
-    if (!j?.ok) return null;
-    if (!j?.data) return { snap:null, uploadedAt: Number(j?.meta?.uploadedAt || 0) };
-    return { snap: j.data, uploadedAt: Number(j?.meta?.uploadedAt || 0) };
-  } catch { return null; }
-}
-
-async function backupRestoreForAddress(){
-  if (!address) return false;
-
-  // local snapshot
-  const localSnap = parseJSONSafe(localStorage.getItem(backupLocalKey(address) || "") || "");
-  const localTs = Number(localSnap?.ts || 0);
-
-  // cloud snapshot
-  let cloud = null;
-  if (hasInternet()) cloud = await backupPullLatest(address);
-  const cloudTs = Number(cloud?.uploadedAt || cloud?.snap?.ts || 0);
-
-  // pick newest
-  const useCloud = cloud?.snap && cloudTs > (localTs + 1500);
-
-  if (useCloud){
-    const ok = backupApplySnapshot(cloud.snap);
-    if (ok){
-      // also refresh local snapshot + meta
-      try{ localStorage.setItem(backupLocalKey(address), JSON.stringify(cloud.snap)); } catch {}
-      const meta = backupLoadMeta(address);
-      meta.cloudLastAt = cloudTs;
-      meta.cloudState = "SYNCED";
-      meta.localLastAt = Date.now();
-      backupSaveMeta(address, meta);
-      return true;
-    }
-  }
-  return false;
 }
 
 /* ================= CHART THEME REFRESH ================= */
@@ -3348,6 +3163,32 @@ function attachCrosshair(ch, overlayEl, formatter){
   canvas.addEventListener("touchcancel", leave, { passive:true });
 }
 
+
+function initBackupUI(){
+  const saveBtn = $("apiBaseSaveBtn");
+  saveBtn?.addEventListener("click", (e) => {
+    e?.preventDefault?.();
+    const v = $("apiBaseInput")?.value || "";
+    const b = setApiBase(v);
+    backupMeta.cloudErr = "";
+    backupSaveMeta();
+    backupRenderUI();
+    pushEvent({ kind:"info", title:"Cloud API base saved", detail: b ? b : "Cleared (relative /api)", status:"ok" });
+  }, { passive:false });
+
+  const bBtn = $("backupNowBtn");
+  bBtn?.addEventListener("click", (e) => {
+    e?.preventDefault?.();
+    if (!address) {
+      pushEvent({ kind:"info", title:"Backup", detail:"Insert a wallet address first", status:"fail" });
+      return;
+    }
+    backupSaveLocalSnapshot();
+    safeAsync(() => backupPushNow(), "backupPushNow");
+  }, { passive:false });
+}
+
+
 /* ================= SETTINGS (Advanced settings) ================= */
 const advBtn = $("advAccBtn");
 const advBody = $("advAccBody");
@@ -3364,37 +3205,38 @@ async function fetchPublicIP(){
     const r = await fetch("https://api.ipify.org?format=json", { cache:"no-store", signal: ctrl.signal });
     if (!r.ok) throw new Error("bad");
     const j = await r.json();
-    return String(j?.ip || "—");
-  } catch { return "—"; }
+    return String(j?.ip || "â€”");
+  } catch { return "â€”"; }
   finally { clearTimeout(t); }
 }
 
 async function renderSettingsSnapshot(){
   setText("settingsTheme", (document.body.dataset.theme || "dark").toUpperCase());
   setText("settingsMode", (liveMode ? "LIVE" : "REFRESH"));
-  setText("settingsWallet", address || "—");
-
-  // Backup status
-  try{ backupRenderUI(); } catch {}
-
+  setText("settingsWallet", address || "â€”");
 
   // Card layout (reorder)
   renderCardOrderUI();
 
-  setText("deviceTz", Intl.DateTimeFormat().resolvedOptions().timeZone || "—");
-  setText("deviceLang", navigator.language || "—");
-  setText("devicePlatform", navigator.platform || "—");
-  setText("deviceScreen", `${window.screen?.width || "?"}×${window.screen?.height || "?"} • DPR ${window.devicePixelRatio || 1}`);
+  setText("deviceTz", Intl.DateTimeFormat().resolvedOptions().timeZone || "â€”");
+  setText("deviceLang", navigator.language || "â€”");
+  setText("devicePlatform", navigator.platform || "â€”");
+  setText("deviceScreen", `${window.screen?.width || "?"}Ã—${window.screen?.height || "?"} â€¢ DPR ${window.devicePixelRatio || 1}`);
 
   const c = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-  const conn = c ? `${c.effectiveType || "?"}${c.downlink ? ` • ${c.downlink}Mb/s` : ""}${c.rtt ? ` • ${c.rtt}ms` : ""}` : "—";
+  const conn = c ? `${c.effectiveType || "?"}${c.downlink ? ` â€¢ ${c.downlink}Mb/s` : ""}${c.rtt ? ` â€¢ ${c.rtt}ms` : ""}` : "â€”";
   setText("deviceConn", conn);
 
   const ipEl = $("deviceIp");
-  if (ipEl && (ipEl.textContent === "—" || !ipEl.textContent)) {
+  if (ipEl && (ipEl.textContent === "â€”" || !ipEl.textContent)) {
     const ip = await fetchPublicIP();
     setText("deviceIp", ip);
   }
+
+  // Backup (per wallet)
+  backupLoadMeta();
+  backupRenderUI();
+
 }
 
 /* ================= ADDRESS COMMIT (FIX: no mixing between addresses) ================= */
@@ -3410,7 +3252,6 @@ function resetPerAddressStateUI(){
 
   nwTAll = []; nwUsdAll = []; nwInjAll = [];
   lastNWPointAt = 0;
-  nwSessionStartAt = Date.now();
 
   eventsAll = [];
 
@@ -3432,9 +3273,9 @@ function resetPerAddressStateUI(){
       try { netWorthChart.update("none"); } catch(e){ console.warn("[netWorthChart.update]", e); }
     }
     // readouts
-    setText("stakeReadout", "—");
-    setText("rewardReadout", "—");
-    setText("nwReadout", "—");
+    setText("stakeReadout", "â€”");
+    setText("rewardReadout", "â€”");
+    setText("nwReadout", "â€”");
   } catch {}
 }
 
@@ -3449,18 +3290,13 @@ async function commitAddress(newAddr) {
   }
 
   address = a;
+  nwSessionStartAt = Date.now();
   localStorage.setItem("inj_address", address);
 
   setAddressDisplay(address);
   settleStart = Date.now();
 
-  nwSessionStartAt = Date.now();
-
-  // restore latest snapshot from Cloud (if newer) into local caches
-  try{ await backupRestoreForAddress(); } catch(e){ console.warn('[backupRestoreForAddress]', e); }
-
-
-  // ✅ FIX: reset all per-address in-memory state (prevents mixing)
+  // âœ… FIX: reset all per-address in-memory state (prevents mixing)
   resetPerAddressStateUI();
 
   availableInj = 0; stakeInj = 0; rewardsInj = 0; apr = 0;
@@ -3472,7 +3308,7 @@ async function commitAddress(newAddr) {
 
   wdMinFilter = safe($("rewardFilter")?.value || 0);
 
-  // ✅ Restore last known values instantly (offline-friendly) for this address
+  // âœ… Restore last known values instantly (offline-friendly) for this address
   try{
     if (address) {
       const snap = loadAccountSnapshot(address);
@@ -3538,8 +3374,8 @@ window.addEventListener("offline", () => {
 
 
 /* ================= INTEGRATIONS_V20260206 =================
-   Privacy toggle (A: blur) • Targets modal • Events PRO filters
-   Price Chart Timeframes • APR Chart series • Validator card
+   Privacy toggle (A: blur) â€¢ Targets modal â€¢ Events PRO filters
+   Price Chart Timeframes â€¢ APR Chart series â€¢ Validator card
    Dynamic axes + crosshair only on interaction + blinking last dot
    ========================================================= */
 
@@ -3552,7 +3388,7 @@ function applyPrivacy(on){
   document.body.classList.toggle("privacy-on", privacyOn);
   try { localStorage.setItem(PRIVACY_KEY, privacyOn ? "1" : "0"); } catch {}
   const ico = $("privacyIcon");
-  if (ico) ico.textContent = privacyOn ? "🙈" : "👁️";
+  if (ico) ico.textContent = privacyOn ? "ðŸ™ˆ" : "ðŸ‘ï¸";
 }
 $("privacyToggle")?.addEventListener("click", (e) => {
   e?.preventDefault?.();
@@ -3714,7 +3550,7 @@ function attachCrosshair2(ch, overlayEl, formatter){
     try{
       overlayEl.textContent = formatter(idx, lbs, ds);
     } catch {
-      overlayEl.textContent = "—";
+      overlayEl.textContent = "â€”";
     }
 
     try { ch.update("none"); } catch {}
@@ -4132,7 +3968,7 @@ function initAprChart(){
   attachCrosshair2(aprChart, $("aprReadout"), (i, lbs, ds) => {
     const t = labelToTs(lbs?.[i]);
     const v = safe(ds?.[i]);
-    return `${t ? new Date(t).toLocaleString() : "—"} • ${v.toFixed(2)}%`;
+    return `${t ? new Date(t).toLocaleString() : "â€”"} â€¢ ${v.toFixed(2)}%`;
   });
 }
 function drawAprChart(){
@@ -4179,7 +4015,7 @@ async function updateValidatorFromDelegations(delegation_responses){
 
   const del = Array.isArray(delegation_responses) ? delegation_responses : [];
   if (!del.length){
-    elName.textContent = "—";
+    elName.textContent = "â€”";
     elMeta.textContent = "No delegations";
     return;
   }
@@ -4191,7 +4027,7 @@ async function updateValidatorFromDelegations(delegation_responses){
   }
   const val = String(best?.delegation?.validator_address || "");
   if (!val){
-    elName.textContent = "—";
+    elName.textContent = "â€”";
     elMeta.textContent = "Validator not found";
     return;
   }
@@ -4199,7 +4035,7 @@ async function updateValidatorFromDelegations(delegation_responses){
   const moniker = v?.description?.moniker || shortAddr(val);
   const rate = safe(v?.commission?.commission_rates?.rate) * 100;
   elName.textContent = moniker;
-  elMeta.textContent = `${shortAddr(val)} • Commission ${Number.isFinite(rate) ? rate.toFixed(2) : "—"}%`;
+  elMeta.textContent = `${shortAddr(val)} â€¢ Commission ${Number.isFinite(rate) ? rate.toFixed(2) : "â€”"}%`;
 }
 
 
@@ -4222,11 +4058,11 @@ function updateValidatorFeeUI(){
              (Number.isFinite(targetPrice) && targetPrice > 0) ? targetPrice : 0;
 
   if (!px){
-    el.textContent = `Fee tx: ${feeInj.toFixed(6)} INJ • ≈ $—`;
+    el.textContent = `Fee tx: ${feeInj.toFixed(6)} INJ â€¢ â‰ˆ $â€”`;
     return;
   }
   const feeUsd = feeInj * px;
-  el.textContent = `Fee tx: ${feeInj.toFixed(6)} INJ • ≈ $${fmtSmart(feeUsd)}`;
+  el.textContent = `Fee tx: ${feeInj.toFixed(6)} INJ â€¢ â‰ˆ $${fmtSmart(feeUsd)}`;
 }
 
 
@@ -4316,15 +4152,6 @@ renderEvents = function(){
   updatePriceScaleBtn();
   ZOOM_OK = tryRegisterZoom();
 
-  // Backup button
-  $("backupNowBtn")?.addEventListener("click", (e) => {
-    e?.preventDefault?.();
-    if (!address) return;
-    backupSaveLocalNow(true);
-    safeAsync(() => backupPush(true), "backupNowPush");
-  }, { passive:false });
-
-
   // Chart defaults: more "breathing room" above last points + smoother axes on all charts
   try{
     if (window.Chart && Chart.defaults){
@@ -4352,7 +4179,7 @@ renderEvents = function(){
   wdMinFilter = safe($("rewardFilter")?.value || 0);
 
   if (address) {
-    // ✅ reset then load current address only
+    // âœ… reset then load current address only
     resetPerAddressStateUI();
 
     loadStakeSeriesLocal(); drawStakeChart();
@@ -4372,7 +4199,7 @@ renderEvents = function(){
 safeAsync(() => cloudPull(), "cloudPull");
   }
 
-  if (liveIcon) liveIcon.textContent = liveMode ? "📡" : "⟳";
+  if (liveIcon) liveIcon.textContent = liveMode ? "ðŸ“¡" : "âŸ³";
   if (modeHint) modeHint.textContent = `Mode: ${liveMode ? "LIVE" : "REFRESH"}`;
 
   modeLoading = true;
@@ -4387,7 +4214,7 @@ safeAsync(() => cloudPull(), "cloudPull");
   try{ await loadCandleSnapshot(liveMode ? false : true); }catch(e){ console.warn("boot loadCandleSnapshot", e); }
 
 
-  // ✅ Auto-load last used address (persisted) + auto-start data load
+  // âœ… Auto-load last used address (persisted) + auto-start data load
   const savedAddr = (localStorage.getItem("inj_address") || "").trim();
   const hasSavedAddr = !!savedAddr && /^inj[a-z0-9]{20,80}$/i.test(savedAddr);
 
@@ -4396,9 +4223,6 @@ safeAsync(() => cloudPull(), "cloudPull");
     address = savedAddr;
     pendingAddress = savedAddr;
     setAddressDisplay(address);
-
-        // Try restore latest Cloud snapshot (if newer) into local caches
-    try{ await backupRestoreForAddress(); } catch(e){ console.warn('boot backupRestoreForAddress', e); }
 
     // Load cached locals immediately (offline-friendly)
     try{
@@ -4510,12 +4334,12 @@ function animate() {
   const oa = displayed.available;
   displayed.available = tick(displayed.available, availableInj);
   colorNumber($("available"), displayed.available, oa, 6);
-  setText("availableUsd", `≈ $${(displayed.available * displayed.price).toFixed(2)}`);
+  setText("availableUsd", `â‰ˆ $${(displayed.available * displayed.price).toFixed(2)}`);
 
   const os = displayed.stake;
   displayed.stake = tick(displayed.stake, stakeInj);
   colorNumber($("stake"), displayed.stake, os, 4);
-  setText("stakeUsd", `≈ $${(displayed.stake * displayed.price).toFixed(2)}`);
+  setText("stakeUsd", `â‰ˆ $${(displayed.stake * displayed.price).toFixed(2)}`);
 
   const stakePct = clamp((displayed.stake / Math.max(0.0001, stakeTargetMaxDyn)) * 100, 0, 100);
   const stakeBar = $("stakeBar");
@@ -4529,7 +4353,7 @@ function animate() {
   const or = displayed.rewards;
   displayed.rewards = tick(displayed.rewards, rewardsInj);
   colorNumber($("rewards"), displayed.rewards, or, 7);
-  setText("rewardsUsd", `≈ $${(displayed.rewards * displayed.price).toFixed(2)}`);
+  setText("rewardsUsd", `â‰ˆ $${(displayed.rewards * displayed.price).toFixed(2)}`);
 
   const autoMaxR = Math.max(0.1, Math.ceil(displayed.rewards * 10) / 10);
   const maxR = Math.max(autoMaxR, safe(rewardTargetMaxDyn) || 1);
