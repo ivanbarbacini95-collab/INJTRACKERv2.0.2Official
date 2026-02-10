@@ -509,8 +509,9 @@
 </html>
 
 <script>
+
 (() => {
-  const ENDPOINT = "/api/track"; // stesso dominio
+  const ENDPOINT = "https://injtracke-rv2-0-2-official.vercel.app/api/track"; // <-- METTI QUI IL DOMINIO ANALYTICS
   const deviceKey = "trk_device_id_v1";
 
   function uuid() {
@@ -521,7 +522,9 @@
     });
   }
 
-  const deviceId = localStorage.getItem(deviceKey) || (localStorage.setItem(deviceKey, uuid()), localStorage.getItem(deviceKey));
+  const deviceId = localStorage.getItem(deviceKey) ||
+    (localStorage.setItem(deviceKey, uuid()), localStorage.getItem(deviceKey));
+
   const sessionId = uuid();
 
   const deviceInfo = {
@@ -529,7 +532,7 @@
     lang: navigator.language,
     tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
     screen: `${screen.width}x${screen.height}`,
-    platform: navigator.platform || "",
+    platform: navigator.platform || ""
   };
 
   async function post(payload) {
